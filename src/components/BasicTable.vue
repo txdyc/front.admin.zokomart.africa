@@ -29,6 +29,10 @@ watch(
 );
 
 defineExpose({ reload, load });
+
+defineSlots<{
+  bodyCell(props: { column: any; record: any; index: number; text: any }): any;
+}>();
 </script>
 
 <template>

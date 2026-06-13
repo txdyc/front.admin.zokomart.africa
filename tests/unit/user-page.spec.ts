@@ -18,9 +18,9 @@ vi.mock('@/components/SchemaForm.vue', () => ({
   }),
 }));
 
-const apiUserPage = vi.fn(async () => ({ records: [], total: 0, current: 1, size: 10 }));
-const apiUserCreate = vi.fn(async () => 1);
-const apiUserUpdate = vi.fn(async () => undefined);
+const apiUserPage = vi.fn(async (..._a: any[]) => ({ records: [], total: 0, current: 1, size: 10 }));
+const apiUserCreate = vi.fn(async (..._a: any[]) => 1);
+const apiUserUpdate = vi.fn(async (..._a: any[]) => undefined);
 vi.mock('@/api/system/user', () => ({
   apiUserPage: (...a: any[]) => apiUserPage(...a),
   apiUserCreate: (...a: any[]) => apiUserCreate(...a),
