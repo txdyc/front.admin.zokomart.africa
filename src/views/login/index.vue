@@ -28,14 +28,14 @@ async function onSubmit() {
 <template>
   <div class="h-screen flex items-center justify-center bg-gray-100">
     <a-card title="ZokoMart Admin" class="w-96">
-      <a-form layout="vertical" @finish="onSubmit">
+      <a-form layout="vertical">
         <a-form-item label="用户名">
-          <a-input v-model:value="form.username" placeholder="superadmin" />
+          <a-input v-model:value="form.username" placeholder="superadmin" @press-enter="onSubmit" />
         </a-form-item>
         <a-form-item label="密码">
           <a-input-password v-model:value="form.password" placeholder="密码" @press-enter="onSubmit" />
         </a-form-item>
-        <a-button type="primary" block html-type="submit" :loading="loading">登录</a-button>
+        <a-button type="primary" block :loading="loading" @click="onSubmit">登录</a-button>
       </a-form>
     </a-card>
   </div>
