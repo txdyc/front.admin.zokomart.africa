@@ -29,3 +29,11 @@ console.error = (...args: unknown[]) => {
   if (msg.includes('Not implemented: window.getComputedStyle')) return;
   origError(...args);
 };
+
+// async-validator 在校验失败用例中会 warn 出规则信息，属预期噪声。
+const origWarn = console.warn.bind(console);
+console.warn = (...args: unknown[]) => {
+  const msg = String(args[0] ?? '');
+  if (msg.startsWith('async-validator:')) return;
+  origWarn(...args);
+};
