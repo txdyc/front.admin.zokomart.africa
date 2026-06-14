@@ -4,7 +4,7 @@ import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
 import { apiMenuTree, apiMenuCreate, apiMenuUpdate, apiMenuDelete } from '@/api/system/menu';
-import type { MenuVO } from '@/types/api';
+import type { MenuVO, Id } from '@/types/api';
 import type { MenuSaveDTO } from '@/types/system';
 
 const formRef = ref<InstanceType<typeof SchemaForm>>();
@@ -75,11 +75,11 @@ const formSchema = computed<FormField[]>(() => [
 
 // ---- 弹窗 ----
 const modalOpen = ref(false);
-const editingId = ref<number | null>(null);
+const editingId = ref<Id | null>(null);
 const formInitial = ref<Record<string, any>>({});
 const submitting = ref(false);
 
-function openCreate(parentId = 0) {
+function openCreate(parentId: Id = 0) {
   editingId.value = null;
   formInitial.value = { parentId, type: 2, sort: 0, visible: 1, status: 1 };
   modalOpen.value = true;

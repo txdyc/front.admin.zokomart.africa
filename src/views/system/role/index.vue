@@ -7,7 +7,7 @@ import SchemaForm, { type FormField } from '@/components/SchemaForm.vue';
 import { apiRolePage, apiRoleCreate, apiRoleUpdate, apiRoleDelete } from '@/api/system/role';
 import { apiMenuTree } from '@/api/system/menu';
 import type { RoleVO, RoleSaveDTO } from '@/types/system';
-import type { MenuVO } from '@/types/api';
+import type { MenuVO, Id } from '@/types/api';
 
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
@@ -55,7 +55,7 @@ function onTreeCheck(keys: any, info: { halfCheckedKeys?: TreeKey[] }) {
 
 // ---- 弹窗 ----
 const modalOpen = ref(false);
-const editingId = ref<number | null>(null);
+const editingId = ref<Id | null>(null);
 const formInitial = ref<Record<string, any>>({});
 const submitting = ref(false);
 
@@ -85,7 +85,8 @@ async function openEdit(row: RoleVO) {
 async function onSubmit() {
   if (!(await formRef.value?.validate())) return;
   const values = formRef.value!.getValues();
-  const menuIds = [...new Set([...checkedKeys.value, ...halfCheckedKeys.value])].map(Number);
+  // 直接用原始 key（可能是雪花字符串 id），切勿 Number() 强转以免丢精度
+  const menuIds = [...new Set([...checkedKeys.value, ...halfCheckedKeys.value])];
   const payload: RoleSaveDTO = { ...(values as RoleSaveDTO), menuIds };
   submitting.value = true;
   try {

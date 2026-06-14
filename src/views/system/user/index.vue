@@ -14,6 +14,7 @@ import {
 } from '@/api/system/user';
 import { apiRolePage } from '@/api/system/role';
 import type { UserVO, UserSaveDTO } from '@/types/system';
+import type { Id } from '@/types/api';
 import type { SelectOption } from '@/components/SchemaForm.vue';
 
 const tableRef = ref<InstanceType<typeof BasicTable>>();
@@ -43,7 +44,7 @@ const columns: TableColumnsType = [
 
 // ---- 新增/编辑弹窗 ----
 const modalOpen = ref(false);
-const editingId = ref<number | null>(null);
+const editingId = ref<Id | null>(null);
 const formInitial = ref<Record<string, any>>({});
 const submitting = ref(false);
 
@@ -126,9 +127,9 @@ async function onDelete(row: UserVO) {
 
 // ---- 赋角色弹窗 ----
 const rolesOpen = ref(false);
-const rolesTargetId = ref<number | null>(null);
+const rolesTargetId = ref<Id | null>(null);
 const roleOptions = ref<SelectOption[]>([]);
-const selectedRoleIds = ref<number[]>([]);
+const selectedRoleIds = ref<Id[]>([]);
 async function openRoles(row: UserVO) {
   rolesTargetId.value = row.id;
   selectedRoleIds.value = [...(row.roleIds || [])];
@@ -145,7 +146,7 @@ async function onSubmitRoles() {
 
 // ---- 重置密码弹窗 ----
 const pwdOpen = ref(false);
-const pwdTargetId = ref<number | null>(null);
+const pwdTargetId = ref<Id | null>(null);
 const newPwd = ref('');
 function openResetPwd(row: UserVO) {
   pwdTargetId.value = row.id;
