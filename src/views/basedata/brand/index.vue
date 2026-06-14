@@ -37,7 +37,7 @@ const columns: TableColumnsType = [
 const formSchema: FormField[] = [
   { field: 'name', label: '品牌名', component: 'input', rules: [{ required: true, message: '请输入品牌名' }] },
   { field: 'code', label: '编码', component: 'input' },
-  { field: 'logoUrl', label: 'Logo 地址', component: 'input', placeholder: '图片 URL' },
+  { field: 'logoUrl', label: '品牌 Logo', component: 'imageUpload', props: { category: 'brand' } },
   { field: 'sort', label: '排序', component: 'number' },
   { field: 'status', label: '启用', component: 'switch' },
   { field: 'remark', label: '备注', component: 'textarea' },

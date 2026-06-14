@@ -9,7 +9,7 @@ export interface SelectOption {
 export interface FormField {
   field: string;
   label: string;
-  component: 'input' | 'password' | 'textarea' | 'number' | 'select' | 'switch';
+  component: 'input' | 'password' | 'textarea' | 'number' | 'select' | 'switch' | 'imageUpload';
   rules?: Rule[];
   options?: SelectOption[];
   placeholder?: string;
@@ -21,6 +21,7 @@ export interface FormField {
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
 import type { FormInstance } from 'ant-design-vue';
+import ImageUpload from '@/components/ImageUpload.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -109,6 +110,11 @@ defineExpose({ validate, getValues });
         v-model:checked="model[f.field]"
         :checked-value="1"
         :un-checked-value="0"
+        v-bind="f.props"
+      />
+      <ImageUpload
+        v-else-if="f.component === 'imageUpload'"
+        v-model:value="model[f.field]"
         v-bind="f.props"
       />
     </a-form-item>
