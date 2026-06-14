@@ -61,3 +61,13 @@ export interface SalesOrderQuery {
   current?: number;
   size?: number;
 }
+
+// ---- 物流动作 ----
+export interface LogisticsDispatchDTO {
+  logisticsProviderId: Id;
+  deliveryFee: number;
+}
+export interface RejectItemDTO {
+  itemId: Id;
+  rejectQty: number;
+}
