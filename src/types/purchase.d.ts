@@ -49,3 +49,79 @@ export interface PurchasePlanQuery {
   current?: number;
   size?: number;
 }
+
+// ---- 采购订单 ----
+export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED';
+export type PaymentStatus = 'UNSET' | 'PAID' | 'UNPAID';
+
+export interface PurchaseOrderItemVO {
+  id: Id;
+  orderId: Id;
+  supplierProductId: Id;
+  productName: string;
+  productCode: string;
+  wholesalePrice: number | null;
+  qty: number;
+  amount: number | null;
+  paymentStatus: PaymentStatus;
+}
+export interface PurchaseOrderVO {
+  id: Id;
+  orderNo: string;
+  planId: Id | null;
+  supplierId: Id;
+  status: OrderStatus;
+  totalQty: number | null;
+  totalAmount: number | null;
+  paidAmount: number | null;
+  remark: string | null;
+  createTime: string | null;
+  items: PurchaseOrderItemVO[];
+}
+export interface PurchaseOrderQuery {
+  planId?: Id;
+  supplierId?: Id;
+  status?: OrderStatus;
+  current?: number;
+  size?: number;
+}
+export interface PaymentMarkDTO {
+  itemIds: Id[];
+  paymentStatus: PaymentStatus;
+}
+
+// ---- 实际采购单 ----
+export type ActualStatus = 'PENDING_INBOUND' | 'INBOUND_DONE';
+export type InboundStatus = 'PENDING' | 'DONE';
+
+export interface ActualPurchaseOrderItemVO {
+  id: Id;
+  actualOrderId: Id;
+  purchaseOrderItemId: Id;
+  supplierProductId: Id;
+  productName: string;
+  qty: number;
+  wholesalePrice: number | null;
+  amount: number | null;
+  inboundStatus: InboundStatus;
+  inboundQty: number | null;
+  inboundTime: string | null;
+}
+export interface ActualPurchaseOrderVO {
+  id: Id;
+  actualNo: string;
+  purchaseOrderId: Id;
+  supplierId: Id;
+  totalQty: number | null;
+  totalAmount: number | null;
+  status: ActualStatus;
+  remark: string | null;
+  createTime: string | null;
+  items: ActualPurchaseOrderItemVO[];
+}
+export interface ActualPurchaseOrderQuery {
+  purchaseOrderId?: Id;
+  status?: ActualStatus;
+  current?: number;
+  size?: number;
+}
