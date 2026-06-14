@@ -32,6 +32,50 @@ export interface ProductSpuQuery {
   size?: number;
 }
 
+// ---- 供应商产品 ----
+export interface SupplierProductVO {
+  id: Id;
+  supplierId: Id;
+  name: string;
+  brandId: Id | null;
+  categoryId: Id | null;
+  productCode: string;
+  wholesalePrice: number | null;
+  retailPrice: number | null;
+  imageUrl: string | null;
+  minPurchaseQty: number | null;
+  skuId: Id | null;
+  status: number;
+  remark: string | null;
+  createTime: string | null;
+}
+export interface SupplierProductSaveDTO {
+  id?: Id;
+  supplierId: Id;
+  name: string;
+  brandId?: Id | null;
+  categoryId?: Id | null;
+  productCode: string;
+  wholesalePrice?: number | null;
+  retailPrice?: number | null;
+  imageUrl?: string | null;
+  minPurchaseQty?: number | null;
+  skuId?: Id | null;
+  status?: number;
+  remark?: string | null;
+}
+
+// 供应商产品列表筛选（CascadeFilter 输出）
+export interface SupplierProductQuery {
+  supplierId?: Id;
+  brandId?: Id;
+  categoryId?: Id;
+  keyword?: string;
+  status?: number;
+  current?: number;
+  size?: number;
+}
+
 // ---- SKU ----
 export interface ProductSkuVO {
   id: Id;
