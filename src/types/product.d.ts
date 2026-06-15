@@ -96,3 +96,21 @@ export interface ProductSkuSaveDTO {
   price?: number | null;
   status?: number;
 }
+
+// ---- 供应商产品 CSV 导入 ----
+export type ImportMode = 'skip' | 'overwrite';
+
+export interface ImportRowError {
+  row: number;
+  productCode: string | null;
+  reason: string;
+}
+
+export interface SupplierProductImportResult {
+  total: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  errors: ImportRowError[];
+}
