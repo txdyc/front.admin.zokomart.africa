@@ -5,6 +5,7 @@ import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
 import CascadeFilter from '@/components/CascadeFilter.vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
+import SupplierProductImportModal from './SupplierProductImportModal.vue';
 import {
   apiSupplierProductPage,
   apiSupplierProductCreate,
@@ -98,6 +99,14 @@ const editingId = ref<Id | null>(null);
 const formInitial = ref<Record<string, any>>({});
 const submitting = ref(false);
 
+const importOpen = ref(false);
+function openImport() {
+  importOpen.value = true;
+}
+function onImported() {
+  tableRef.value?.reload();
+}
+
 function openCreate() {
   editingId.value = null;
   // 默认带入当前筛选的供应商，MOQ 默认 1
@@ -152,7 +161,7 @@ async function onDelete(row: SupplierProductVO) {
   tableRef.value?.reload();
 }
 
-defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange });
+defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImport, onImported });
 </script>
 
 <template>
@@ -163,14 +172,19 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange });
 
     <a-card :bordered="false">
       <div class="mb-3">
-        <a-button
-          v-perm="'supplierProduct:create'"
-          type="primary"
-          data-test="supplier-product-create"
-          @click="openCreate"
-        >
-          新增供应商产品
-        </a-button>
+        <a-space>
+          <a-button
+            v-perm="'supplierProduct:create'"
+            type="primary"
+            data-test="supplier-product-create"
+            @click="openCreate"
+          >
+            新增供应商产品
+          </a-button>
+          <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-import" @click="openImport">
+            导入
+          </a-button>
+        </a-space>
       </div>
 
       <BasicTable ref="tableRef" :columns="columns" :fetcher="apiSupplierProductPage" :params="query">
@@ -215,5 +229,12 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange });
     >
       <SchemaForm ref="formRef" :schema="formSchema" :initial="formInitial" />
     </a-modal>
+
+    <SupplierProductImportModal
+      v-model:open="importOpen"
+      :supplier-options="supplierOptions"
+      :default-supplier-id="filter.supplierId"
+      @imported="onImported"
+    />
   </div>
 </template>
