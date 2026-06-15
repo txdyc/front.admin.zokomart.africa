@@ -34,6 +34,7 @@ declare module 'vue' {
     AResult: typeof import('ant-design-vue/es')['Result']
     ASelect: typeof import('ant-design-vue/es')['Select']
     ASpace: typeof import('ant-design-vue/es')['Space']
+    ASpin: typeof import('ant-design-vue/es')['Spin']
     ASwitch: typeof import('ant-design-vue/es')['Switch']
     ATable: typeof import('ant-design-vue/es')['Table']
     ATabPane: typeof import('ant-design-vue/es')['TabPane']
@@ -41,11 +42,15 @@ declare module 'vue' {
     ATag: typeof import('ant-design-vue/es')['Tag']
     ATextarea: typeof import('ant-design-vue/es')['Textarea']
     ATooltip: typeof import('ant-design-vue/es')['Tooltip']
+    ATransfer: typeof import('ant-design-vue/es')['Transfer']
     ATree: typeof import('ant-design-vue/es')['Tree']
+    AUpload: typeof import('ant-design-vue/es')['Upload']
     BasicTable: typeof import('./../components/BasicTable.vue')['default']
     CascadeFilter: typeof import('./../components/CascadeFilter.vue')['default']
+    ImageUpload: typeof import('./../components/ImageUpload.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SchemaForm: typeof import('./../components/SchemaForm.vue')['default']
+    SupplierBrandDrawer: typeof import('./../components/SupplierBrandDrawer.vue')['default']
   }
 }
