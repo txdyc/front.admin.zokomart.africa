@@ -45,6 +45,16 @@ export interface SupplierSaveDTO {
   remark?: string | null;
 }
 
+// ---- 供应商-品牌授权 ----
+export interface SupplierBrandVO {
+  id: Id;
+  brandId: Id;
+  brandName: string | null;
+  brandLogoUrl: string | null;
+  status: number;
+  remark: string | null;
+}
+
 // ---- 分类（树）----
 export interface CategoryVO {
   id: Id;
