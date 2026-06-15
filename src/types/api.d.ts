@@ -1,4 +1,9 @@
 // 与后端统一响应/分页/鉴权契约对齐（字段名 camelCase）。
+
+// 后端雪花 Long 主键超出 JS 安全整数范围时由后端序列化为字符串，小 ID 仍为数字，
+// 故前端实体 ID 统一用 number | string，切勿对其做 Number() 强转（会丢精度）。
+export type Id = number | string;
+
 export interface ApiResult<T = any> {
   code: number;
   msg: string;
@@ -19,8 +24,8 @@ export interface PageQuery {
 }
 
 export interface MenuVO {
-  id: number;
-  parentId: number;
+  id: Id;
+  parentId: Id;
   name: string;
   type: number; // 1 目录 / 2 菜单(页面) / 3 按钮(仅权限)
   permCode: string | null;
@@ -34,7 +39,7 @@ export interface MenuVO {
 }
 
 export interface LoginUserVO {
-  id: number;
+  id: Id;
   username: string;
   nickname: string | null;
   isSuper: number; // 1 = 超级管理员

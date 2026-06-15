@@ -24,11 +24,16 @@ export default defineConfig({
         target: process.env.VITE_PROXY_TARGET || 'http://localhost:8081',
         changeOrigin: true,
       },
+      '/files': {
+        target: process.env.VITE_PROXY_TARGET || 'http://localhost:8081',
+        changeOrigin: true,
+      },
     },
   },
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['tests/setup.ts'],
     include: ['tests/unit/**/*.spec.ts'],
     coverage: { reporter: ['text', 'html'] },
   },
