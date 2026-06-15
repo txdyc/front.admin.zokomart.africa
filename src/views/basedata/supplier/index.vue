@@ -12,6 +12,7 @@ import {
 } from '@/api/basedata/supplier';
 import type { SupplierVO, SupplierSaveDTO } from '@/types/basedata';
 import type { Id } from '@/types/api';
+import SupplierBrandDrawer from '@/components/SupplierBrandDrawer.vue';
 
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
@@ -49,6 +50,12 @@ const modalOpen = ref(false);
 const editingId = ref<Id | null>(null);
 const formInitial = ref<Record<string, any>>({});
 const submitting = ref(false);
+const brandDrawerOpen = ref(false);
+const currentSupplierId = ref<Id | null>(null);
+function openBrandDrawer(row: SupplierVO) {
+  currentSupplierId.value = row.id;
+  brandDrawerOpen.value = true;
+}
 
 function openCreate() {
   editingId.value = null;
@@ -143,6 +150,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
           <template v-else-if="column.key === 'action'">
             <a-space>
               <a v-perm="'supplier:update'" @click="openEdit(record as SupplierVO)">编辑</a>
+              <a v-perm="'supplier:brand:assign'" @click="openBrandDrawer(record as SupplierVO)">管理品牌</a>
               <a-popconfirm title="确认删除该供应商？" @confirm="onDelete(record as SupplierVO)">
                 <a v-perm="'supplier:delete'" class="text-red-500">删除</a>
               </a-popconfirm>
@@ -161,5 +169,6 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
     >
       <SchemaForm ref="formRef" :schema="formSchema" :initial="formInitial" />
     </a-modal>
+    <SupplierBrandDrawer v-model:open="brandDrawerOpen" :supplier-id="currentSupplierId" />
   </div>
 </template>
