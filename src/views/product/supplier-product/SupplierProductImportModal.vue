@@ -70,9 +70,18 @@ function downloadTemplate() {
 }
 
 async function onSubmit() {
-  if (form.supplierId == null) return message.warning('请选择供应商');
-  if (form.brandId == null) return message.warning('请选择品牌');
-  if (!file.value) return message.warning('请选择 CSV 文件');
+  if (form.supplierId == null) {
+    message.warning('请选择供应商');
+    return;
+  }
+  if (form.brandId == null) {
+    message.warning('请选择品牌');
+    return;
+  }
+  if (!file.value) {
+    message.warning('请选择 CSV 文件');
+    return;
+  }
   const fd = new FormData();
   fd.append('file', file.value);
   fd.append('supplierId', String(form.supplierId));
