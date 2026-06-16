@@ -31,7 +31,7 @@ async function loadBrands(supplierId?: Id) {
   form.brandId = undefined;
   if (supplierId == null) return;
   const list = await apiAuthorizedBrands(supplierId);
-  brandOptions.value = list.map((b) => ({ label: b.brandName, value: b.brandId }));
+  brandOptions.value = list.map((b) => ({ label: b.brandName ?? String(b.brandId), value: b.brandId }));
   if (brandOptions.value.length === 0) {
     message.warning('该供应商暂无已授权品牌，请先在供应商管理里授权');
   }
