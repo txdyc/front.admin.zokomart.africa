@@ -1,9 +1,10 @@
-import { http } from '@/utils/request';
+import { http, request } from '@/utils/request';
 import type { PageResult, Id } from '@/types/api';
 import type {
   SupplierProductVO,
   SupplierProductSaveDTO,
   SupplierProductQuery,
+  SupplierProductImportResult,
 } from '@/types/product';
 import type { BrandVO, CategoryVO } from '@/types/basedata';
 
@@ -23,3 +24,7 @@ export const apiSupplierBrands = (supplierId: Id) =>
   http.get<BrandVO[]>(`/suppliers/${supplierId}/brands`);
 export const apiSupplierCategories = (supplierId: Id) =>
   http.get<CategoryVO[]>(`/suppliers/${supplierId}/categories`);
+
+// CSV 批量导入：multipart（file + supplierId + brandId + mode）
+export const apiSupplierProductImport = (form: FormData) =>
+  request.post('/supplier-products/import', form) as unknown as Promise<SupplierProductImportResult>;
