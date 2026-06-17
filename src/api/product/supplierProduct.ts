@@ -5,6 +5,7 @@ import type {
   SupplierProductSaveDTO,
   SupplierProductQuery,
   SupplierProductImportResult,
+  ScrapedProductRow,
 } from '@/types/product';
 import type { BrandVO, CategoryVO } from '@/types/basedata';
 
@@ -28,3 +29,15 @@ export const apiSupplierCategories = (supplierId: Id) =>
 // CSV 批量导入：multipart（file + supplierId + brandId + mode）
 export const apiSupplierProductImport = (form: FormData) =>
   request.post('/supplier-products/import', form) as unknown as Promise<SupplierProductImportResult>;
+
+// 从 URL 抓取产品（仅解析，不入库）
+export const apiScrapeProducts = (url: string) =>
+  http.post<ScrapedProductRow[]>('/supplier-products/scrape', { url });
+
+// 导入抓取到的行
+export const apiImportScraped = (payload: {
+  supplierId: Id;
+  brandId: Id;
+  mode: 'skip' | 'overwrite';
+  rows: ScrapedProductRow[];
+}) => http.post<SupplierProductImportResult>('/supplier-products/import-scraped', payload);
