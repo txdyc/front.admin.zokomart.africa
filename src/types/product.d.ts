@@ -47,6 +47,9 @@ export interface SupplierProductVO {
   skuId: Id | null;
   status: number;
   remark: string | null;
+  qtyPerBox: number | null;
+  boxPrice: number | null;
+  stockStatus: string | null;
   createTime: string | null;
 }
 export interface SupplierProductSaveDTO {
@@ -63,6 +66,9 @@ export interface SupplierProductSaveDTO {
   skuId?: Id | null;
   status?: number;
   remark?: string | null;
+  qtyPerBox?: number | null;
+  boxPrice?: number | null;
+  stockStatus?: string | null;
 }
 
 // 供应商产品列表筛选（CascadeFilter 输出）
@@ -113,4 +119,15 @@ export interface SupplierProductImportResult {
   skipped: number;
   failed: number;
   errors: ImportRowError[];
+}
+
+// ---- 从 URL 抓取的产品行 ----
+export interface ScrapedProductRow {
+  productName: string;
+  productCode: string;
+  qtyPerBox: number | null;
+  imageUrl: string | null;
+  unitPrice: number | null;
+  boxPrice: number | null;
+  stockStatus: string | null;
 }
