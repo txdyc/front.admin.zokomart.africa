@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { message } from 'ant-design-vue';
 import type { SelectOption } from '@/components/SchemaForm.vue';
 import { apiScrapeProducts, apiImportScraped } from '@/api/product/supplierProduct';
@@ -53,6 +53,10 @@ watch(
 );
 watch(() => form.supplierId, (v) => loadBrands(v));
 
+// 预览用数据源：附加 _idx 作为稳定行键（源数据 productCode 可能重复，不能作 key）。
+// 真正提交导入用的是 rows.value（纯 ScrapedProductRow[]），不含 _idx。
+const previewData = computed(() => rows.value.map((r, i) => ({ ...r, _idx: i })));
+
 const previewColumns = [
   { title: '#', key: 'idx', width: 50, customRender: ({ index }: { index: number }) => index + 1 },
   { title: '名称', dataIndex: 'productName' },
@@ -71,6 +75,7 @@ async function onScrape() {
   }
   scraping.value = true;
   result.value = null;
+  rows.value = []; // 清空旧结果，避免抓取失败时残留上一个 URL 的数据被误导入
   try {
     rows.value = await apiScrapeProducts(form.url.trim());
     message.success(`抓取到 ${rows.value.length} 条产品`);
@@ -140,8 +145,8 @@ defineExpose({ form, brandOptions, rows, result, onScrape, onImport });
       </a-form-item>
     </a-form>
 
-    <a-table v-if="rows.length" size="small" :pagination="{ pageSize: 8 }" :data-source="rows"
-      :columns="previewColumns" row-key="productCode" :scroll="{ y: 320 }">
+    <a-table v-if="rows.length" size="small" :pagination="{ pageSize: 8 }" :data-source="previewData"
+      :columns="previewColumns" row-key="_idx" :scroll="{ y: 320 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'imageUrl'">
           <a-image v-if="record.imageUrl" :src="record.imageUrl" :width="36" />
