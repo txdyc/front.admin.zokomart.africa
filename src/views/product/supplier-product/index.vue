@@ -6,6 +6,7 @@ import BasicTable from '@/components/BasicTable.vue';
 import CascadeFilter from '@/components/CascadeFilter.vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
 import SupplierProductImportModal from './SupplierProductImportModal.vue';
+import SupplierProductScrapeModal from './SupplierProductScrapeModal.vue';
 import {
   apiSupplierProductPage,
   apiSupplierProductCreate,
@@ -76,6 +77,9 @@ const columns: TableColumnsType = [
   { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
   { title: '零售价', dataIndex: 'retailPrice', key: 'retailPrice', width: 90 },
   { title: 'MOQ', dataIndex: 'minPurchaseQty', key: 'minPurchaseQty', width: 70 },
+  { title: '每箱量', dataIndex: 'qtyPerBox', key: 'qtyPerBox', width: 80 },
+  { title: '箱价', dataIndex: 'boxPrice', key: 'boxPrice', width: 90 },
+  { title: '库存状态', dataIndex: 'stockStatus', key: 'stockStatus', width: 120 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '操作', key: 'action', width: 140 },
 ];
@@ -89,6 +93,9 @@ const formSchema = computed<FormField[]>(() => [
   { field: 'wholesalePrice', label: '批发价 (GHS)', component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: '批发价不能为负' }] },
   { field: 'retailPrice', label: '零售价 (GHS)', component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: '零售价不能为负' }] },
   { field: 'minPurchaseQty', label: '最小采购量 (MOQ)', component: 'number', props: { min: 1, precision: 0 }, rules: [{ type: 'number', min: 1, message: '最小采购量不能小于 1' }] },
+  { field: 'qtyPerBox', label: '每箱数量', component: 'number', props: { min: 0, precision: 0 } },
+  { field: 'boxPrice', label: '整箱价 (GHS)', component: 'number', props: { min: 0, precision: 2 } },
+  { field: 'stockStatus', label: '库存状态', component: 'input' },
   { field: 'imageUrl', label: '图片地址', component: 'input', placeholder: '图片 URL' },
   { field: 'status', label: '启用', component: 'switch' },
   { field: 'remark', label: '备注', component: 'textarea' },
@@ -105,6 +112,11 @@ function openImport() {
 }
 function onImported() {
   tableRef.value?.reload();
+}
+
+const scrapeOpen = ref(false);
+function openScrape() {
+  scrapeOpen.value = true;
 }
 
 function openCreate() {
@@ -124,6 +136,9 @@ function openEdit(row: SupplierProductVO) {
     wholesalePrice: row.wholesalePrice,
     retailPrice: row.retailPrice,
     minPurchaseQty: row.minPurchaseQty,
+    qtyPerBox: row.qtyPerBox ?? undefined,
+    boxPrice: row.boxPrice ?? undefined,
+    stockStatus: row.stockStatus ?? undefined,
     imageUrl: row.imageUrl,
     status: row.status,
     remark: row.remark,
@@ -161,7 +176,7 @@ async function onDelete(row: SupplierProductVO) {
   tableRef.value?.reload();
 }
 
-defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImport, onImported });
+defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImport, onImported, openScrape });
 </script>
 
 <template>
@@ -183,6 +198,9 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
           </a-button>
           <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-import" @click="openImport">
             导入
+          </a-button>
+          <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-scrape" @click="openScrape">
+            从URL获取
           </a-button>
         </a-space>
       </div>
@@ -232,6 +250,13 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
 
     <SupplierProductImportModal
       v-model:open="importOpen"
+      :supplier-options="supplierOptions"
+      :default-supplier-id="filter.supplierId"
+      @imported="onImported"
+    />
+
+    <SupplierProductScrapeModal
+      v-model:open="scrapeOpen"
       :supplier-options="supplierOptions"
       :default-supplier-id="filter.supplierId"
       @imported="onImported"
