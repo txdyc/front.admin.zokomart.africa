@@ -7,6 +7,7 @@ import CascadeFilter from '@/components/CascadeFilter.vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
 import SupplierProductImportModal from './SupplierProductImportModal.vue';
 import SupplierProductScrapeModal from './SupplierProductScrapeModal.vue';
+import SupplierProductWcSyncModal from './SupplierProductWcSyncModal.vue';
 import {
   apiSupplierProductPage,
   apiSupplierProductCreate,
@@ -119,6 +120,11 @@ function openScrape() {
   scrapeOpen.value = true;
 }
 
+const wcSyncOpen = ref(false);
+function openWcSync() {
+  wcSyncOpen.value = true;
+}
+
 function openCreate() {
   editingId.value = null;
   // 默认带入当前筛选的供应商，MOQ 默认 1
@@ -176,7 +182,7 @@ async function onDelete(row: SupplierProductVO) {
   tableRef.value?.reload();
 }
 
-defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImport, onImported, openScrape });
+defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImport, onImported, openScrape, openWcSync });
 </script>
 
 <template>
@@ -201,6 +207,9 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
           </a-button>
           <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-scrape" @click="openScrape">
             从URL获取
+          </a-button>
+          <a-button v-perm="'wc:sync'" data-test="supplier-product-wc-sync" @click="openWcSync">
+            同步到独立站
           </a-button>
         </a-space>
       </div>
@@ -253,6 +262,12 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
       :supplier-options="supplierOptions"
       :default-supplier-id="filter.supplierId"
       @imported="onImported"
+    />
+
+    <SupplierProductWcSyncModal
+      v-model:open="wcSyncOpen"
+      :supplier-options="supplierOptions"
+      :default-supplier-id="filter.supplierId"
     />
 
     <SupplierProductScrapeModal

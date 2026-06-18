@@ -70,7 +70,7 @@ defineExpose({ load, onSave, targetKeys, dataSource });
         :data-source="dataSource"
         :target-keys="targetKeys"
         :titles="['全部品牌', '已授权']"
-        :render="(item: Item) => item.title"
+        :render="(item: any) => item.title"
         :list-style="{ width: '220px', height: '420px' }"
         @change="onChange"
       />
