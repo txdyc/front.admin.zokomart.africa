@@ -10,6 +10,7 @@ import { apiSupplierProductGet } from '@/api/product/supplierProduct';
 import type { SalesOrderVO, SalesOrderCreateDTO, SalesStatus } from '@/types/sales';
 import type { InventoryStockVO, InventoryStockQuery } from '@/types/inventory';
 import type { Id } from '@/types/api';
+import LabelPrintDrawer from './LabelPrintDrawer.vue';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
 
@@ -24,6 +25,7 @@ const STATUS: Record<SalesStatus, { label: string; color: string }> = {
 
 // ---------------- 列表 ----------------
 const tableRef = ref<InstanceType<typeof BasicTable>>();
+const labelDrawerRef = ref<InstanceType<typeof LabelPrintDrawer>>();
 // 'all' | 'pending' | 'completed' → completed 查询参数
 const completedTab = ref<'all' | 'pending' | 'completed'>('all');
 const query = ref<Record<string, any>>({});
@@ -185,9 +187,18 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
           <a-radio-button value="pending">未完成</a-radio-button>
           <a-radio-button value="completed">已完成</a-radio-button>
         </a-radio-group>
-        <a-button v-perm="'sales:order:create'" type="primary" data-test="sales-create" @click="openCreate">
-          新增销售订单
-        </a-button>
+        <a-space>
+          <a-button
+            v-perm="'sales:order:list'"
+            data-test="sales-print-labels"
+            @click="labelDrawerRef?.openDrawer()"
+          >
+            打印今日面单
+          </a-button>
+          <a-button v-perm="'sales:order:create'" type="primary" data-test="sales-create" @click="openCreate">
+            新增销售订单
+          </a-button>
+        </a-space>
       </div>
     </a-card>
 
@@ -304,6 +315,8 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
         </a-space>
       </template>
     </a-drawer>
+
+    <LabelPrintDrawer ref="labelDrawerRef" />
 
     <!-- 详情 -->
     <a-drawer v-model:open="viewOpen" title="销售订单详情" width="800" destroy-on-close>
