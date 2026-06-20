@@ -42,7 +42,12 @@ export async function renderLabelQr(orderNo: string): Promise<string> {
   return QRCode.toString(orderNo, { type: 'svg', margin: 0, width: 120 });
 }
 
-/** 把展开后的面单单元渲染成自包含的 100mm×100mm 打印文档（English Version B）。 */
+/**
+ * 把展开后的面单单元渲染成自包含的 100mm×100mm 打印文档（English Version B）。
+ * 安全约定：客户字段（姓名/电话/地址/订单号）一律经 esc() 转义；
+ * qrByOrderNo 的值被当作**可信 SVG** 原样内联，调用方必须用 renderLabelQr() 生成，
+ * 不得传入任何不可信来源的字符串。seq/total 均为 unitCount() 产出的整数，无需转义。
+ */
 export function buildLabelsHtml(units: LabelUnit[], qrByOrderNo: Map<string, string>): string {
   const body = units
     .map((u) => {

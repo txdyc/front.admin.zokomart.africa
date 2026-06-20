@@ -6,6 +6,7 @@ vi.mock('qrcode', () => ({
 
 import { expandLabels, totalLabelCount, buildLabelsHtml, renderLabelQr } from '@/utils/label/packageLabel';
 import type { SalesOrderLabelVO } from '@/types/sales';
+import QRCode from 'qrcode';
 
 const order = (over: Partial<SalesOrderLabelVO> = {}): SalesOrderLabelVO => ({
   id: 1, orderNo: 'SO001', customerName: 'Kwame', customerPhone: '024',
@@ -22,6 +23,7 @@ describe('expandLabels', () => {
   it('totalQty 为 0/null 时兜底 1 张', () => {
     expect(expandLabels([order({ totalQty: 0 })])).toHaveLength(1);
     expect(expandLabels([order({ totalQty: null })])).toHaveLength(1);
+    expect(expandLabels([order({ totalQty: -5 })])).toHaveLength(1);
   });
   it('多订单累加', () => {
     const units = expandLabels([order({ id: 1, totalQty: 2 }), order({ id: 2, totalQty: 1 })]);
@@ -50,16 +52,18 @@ describe('buildLabelsHtml', () => {
   });
   it('对姓名/地址做 HTML 转义', () => {
     const html = buildLabelsHtml(
-      expandLabels([order({ totalQty: 1, customerName: 'A & B', customerAddress: '<x>' })]), qr);
+      expandLabels([order({ totalQty: 1, customerName: 'A & B', customerAddress: '<x>', customerPhone: '024 & 025' })]), qr);
     expect(html).toContain('A &amp; B');
     expect(html).toContain('&lt;x&gt;');
     expect(html).not.toContain('<x>');
+    expect(html).toContain('024 &amp; 025');
   });
 });
 
 describe('renderLabelQr', () => {
-  it('以 orderNo 调 qrcode 生成 svg', async () => {
+  it('以 orderNo 调 qrcode 生成 svg，且参数为 svg/margin0/width120', async () => {
     const svg = await renderLabelQr('SO001');
     expect(svg).toContain('data-for="SO001"');
+    expect(QRCode.toString).toHaveBeenCalledWith('SO001', { type: 'svg', margin: 0, width: 120 });
   });
 });
