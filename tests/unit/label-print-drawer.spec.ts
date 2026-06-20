@@ -14,6 +14,10 @@ vi.mock('@/api/sales/order', () => ({
 const printHtml = vi.fn((_html: string) => true);
 vi.mock('@/utils/label/print', () => ({ printHtml: (html: string) => printHtml(html) }));
 
+vi.mock('qrcode', () => ({
+  default: { toString: vi.fn(async () => '<svg></svg>') },
+}));
+
 import LabelPrintDrawer from '@/views/sales/order/LabelPrintDrawer.vue';
 
 describe('面单打印抽屉', () => {

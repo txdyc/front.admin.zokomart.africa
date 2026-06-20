@@ -43,6 +43,8 @@ async function load() {
     });
     orders.value = data;
     selectedKeys.value = data.map((o) => o.id); // 默认全选
+  } catch {
+    // 错误已由 request 响应拦截器统一 message.error 提示，此处仅防止未处理的 promise 拒绝
   } finally {
     loading.value = false;
   }
@@ -71,6 +73,8 @@ async function doPrint() {
     const html = buildLabelsHtml(units, qrMap);
     const ok = printHtml(html);
     if (!ok) message.error('打印窗口被拦截，请允许本站弹出窗口后重试');
+  } catch {
+    message.error('生成面单失败，请重试');
   } finally {
     printing.value = false;
   }
@@ -78,7 +82,7 @@ async function doPrint() {
 
 const onSelChange = (keys: Id[]) => (selectedKeys.value = keys);
 
-defineExpose({ openDrawer, doPrint, load, labelCount });
+defineExpose({ openDrawer, doPrint, labelCount });
 </script>
 
 <template>
