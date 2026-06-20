@@ -62,6 +62,16 @@ export interface SalesOrderQuery {
   size?: number;
 }
 
+export interface SalesOrderLabelVO {
+  id: Id;
+  orderNo: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  totalQty: number | null;
+  totalAmount: number | null;
+}
+
 // ---- 物流动作 ----
 export interface LogisticsDispatchDTO {
   logisticsProviderId: Id;
