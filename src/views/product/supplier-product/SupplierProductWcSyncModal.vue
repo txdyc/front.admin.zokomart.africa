@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { onUnmounted, reactive, ref, watch } from 'vue';
 import { message } from 'ant-design-vue';
 import type { SelectOption } from '@/components/SchemaForm.vue';
-import { apiWcSync } from '@/api/wcSync';
+import { apiStartWcSync, apiGetWcSyncJob } from '@/api/wcSync';
 import { apiAuthorizedBrands } from '@/api/basedata/supplierBrand';
-import type { WcSyncResult } from '@/types/wcSync';
+import type { WcSyncJob } from '@/types/wcSync';
 import type { Id } from '@/types/api';
 
 const props = defineProps<{
@@ -16,8 +16,64 @@ const emit = defineEmits<{ (e: 'update:open', v: boolean): void }>();
 
 const form = reactive<{ supplierId?: Id; brandIds: Id[] }>({ brandIds: [] });
 const brandOptions = ref<SelectOption[]>([]);
-const result = ref<WcSyncResult | null>(null);
+const job = ref<WcSyncJob | null>(null);
 const syncing = ref(false);
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+const TERMINAL = ['SUCCESS', 'PARTIAL', 'FAILED', 'INTERRUPTED'];
+
+function stopPolling() {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+}
+
+async function poll(jobId: Id) {
+  try {
+    const j = await apiGetWcSyncJob(jobId);
+    job.value = j;
+    if (j && TERMINAL.includes(j.status)) {
+      syncing.value = false;
+      stopPolling();
+      message.success(
+        `同步${j.status === 'SUCCESS' ? '完成' : j.status === 'PARTIAL' ? '部分完成' : '结束'}：` +
+          `新增 ${j.created}，更新 ${j.updated}，草稿 ${j.drafted}，失败 ${j.failed}`,
+      );
+      return;
+    }
+  } catch {
+    /* 轮询瞬时失败：忽略本次，下次再试 */
+  }
+  timer = setTimeout(() => poll(jobId), 1500);
+}
+
+async function onSync() {
+  if (form.supplierId == null) {
+    message.warning('请选择供应商');
+    return;
+  }
+  if (form.brandIds.length === 0) {
+    message.warning('请至少选择一个品牌');
+    return;
+  }
+  syncing.value = true;
+  job.value = null;
+  try {
+    const { jobId } = await apiStartWcSync({ supplierId: form.supplierId, brandIds: form.brandIds });
+    poll(jobId);
+  } catch (e) {
+    syncing.value = false;
+    throw e;
+  }
+}
+
+function onClose() {
+  stopPolling();
+  emit('update:open', false);
+}
+
+onUnmounted(stopPolling);
 
 async function loadBrands(supplierId?: Id) {
   brandOptions.value = [];
@@ -34,7 +90,8 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      result.value = null;
+      job.value = null;
+      stopPolling();
       form.supplierId = (props.defaultSupplierId ?? undefined) as Id | undefined;
       loadBrands(form.supplierId);
     }
@@ -42,31 +99,7 @@ watch(
 );
 watch(() => form.supplierId, (v) => loadBrands(v));
 
-async function onSync() {
-  if (form.supplierId == null) {
-    message.warning('请选择供应商');
-    return;
-  }
-  if (form.brandIds.length === 0) {
-    message.warning('请至少选择一个品牌');
-    return;
-  }
-  syncing.value = true;
-  try {
-    result.value = await apiWcSync({ supplierId: form.supplierId, brandIds: form.brandIds });
-    message.success(
-      `同步完成：新增 ${result.value.created}，更新 ${result.value.updated}，下架 ${result.value.drafted}，跳过 ${result.value.skipped}，失败 ${result.value.failed}`,
-    );
-  } finally {
-    syncing.value = false;
-  }
-}
-
-function onClose() {
-  emit('update:open', false);
-}
-
-defineExpose({ form, brandOptions, result, onSync });
+defineExpose({ form, brandOptions, job, onSync });
 </script>
 
 <template>
@@ -82,21 +115,26 @@ defineExpose({ form, brandOptions, result, onSync });
       </a-form-item>
     </a-form>
 
-    <div v-if="result" class="mt-2">
-      <a-descriptions size="small" :column="3" bordered>
-        <a-descriptions-item label="总数">{{ result.total }}</a-descriptions-item>
-        <a-descriptions-item label="新增">{{ result.created }}</a-descriptions-item>
-        <a-descriptions-item label="更新">{{ result.updated }}</a-descriptions-item>
-        <a-descriptions-item label="下架">{{ result.drafted }}</a-descriptions-item>
-        <a-descriptions-item label="跳过">{{ result.skipped }}</a-descriptions-item>
-        <a-descriptions-item label="失败">{{ result.failed }}</a-descriptions-item>
+    <div v-if="syncing || job" class="mt-2">
+      <a-progress
+        v-if="job"
+        :percent="job.total ? Math.round((job.processed / job.total) * 100) : 0"
+        :status="job.status === 'FAILED' ? 'exception' : job.status === 'RUNNING' ? 'active' : 'normal'"
+      />
+      <a-descriptions v-if="job" size="small" :column="3" bordered class="mt-2">
+        <a-descriptions-item label="状态">{{ job.status }}</a-descriptions-item>
+        <a-descriptions-item label="进度">{{ job.processed }}/{{ job.total }}</a-descriptions-item>
+        <a-descriptions-item label="新增">{{ job.created }}</a-descriptions-item>
+        <a-descriptions-item label="更新">{{ job.updated }}</a-descriptions-item>
+        <a-descriptions-item label="草稿">{{ job.drafted }}</a-descriptions-item>
+        <a-descriptions-item label="失败">{{ job.failed }}</a-descriptions-item>
       </a-descriptions>
-      <a-table v-if="result.errors.length" class="mt-2" size="small" :pagination="false"
-        :data-source="result.errors"
+      <a-table v-if="job && job.failedItems && job.failedItems.length" class="mt-2" size="small"
+        :pagination="false" :data-source="job.failedItems"
         :columns="[
           { title: '产品编码', dataIndex: 'productCode', width: 160 },
           { title: '原因', dataIndex: 'reason' },
-        ]" row-key="supplierProductId" />
+        ]" row-key="productCode" />
     </div>
 
     <template #footer>
