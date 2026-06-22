@@ -43,6 +43,16 @@ export interface SalesOrderVO {
   items: SalesOrderItemVO[];
 }
 
+export interface SalesOrderLabelVO {
+  id: Id;
+  orderNo: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  totalQty: number | null;
+  totalAmount: number | null;
+}
+
 export interface SalesOrderCreateItem {
   supplierProductId: Id;
   qty: number;
