@@ -8,11 +8,13 @@ const menuMap: Record<Locale, Record<string, string>> = {
   'en-US': {
     系统管理: 'System',
     基础数据: 'Base Data',
+    平台目录: 'Catalog',
     商品管理: 'Product',
     采购管理: 'Purchasing',
     库存管理: 'Inventory',
     销售管理: 'Sales',
     物流管理: 'Logistics',
+    客户管理: 'Customers',
     '/dashboard': 'Dashboard',
     '/system/user': 'Users',
     '/system/role': 'Roles',
