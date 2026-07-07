@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -17,20 +18,21 @@ import type { SelectOption } from '@/components/SchemaForm.vue';
 import type { Id } from '@/types/api';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
+const { t } = useI18n();
 
-const ORDER_STATUS: Record<OrderStatus, { label: string; color: string }> = {
-  PENDING_PAYMENT: { label: '待付款', color: 'orange' },
-  CONFIRMED: { label: '已确认', color: 'green' },
-};
-const PAY_STATUS: Record<PaymentStatus, { label: string; color: string }> = {
-  UNSET: { label: '未设置', color: 'default' },
-  PAID: { label: '已付', color: 'green' },
-  UNPAID: { label: '未付', color: 'red' },
-};
-const ACTUAL_STATUS: Record<ActualStatus, { label: string; color: string }> = {
-  PENDING_INBOUND: { label: '待入库', color: 'orange' },
-  INBOUND_DONE: { label: '已入库', color: 'green' },
-};
+const ORDER_STATUS = computed<Record<OrderStatus, { label: string; color: string }>>(() => ({
+  PENDING_PAYMENT: { label: t('purchase.order.statusPendingPayment'), color: 'orange' },
+  CONFIRMED: { label: t('purchase.order.statusConfirmed'), color: 'green' },
+}));
+const PAY_STATUS = computed<Record<PaymentStatus, { label: string; color: string }>>(() => ({
+  UNSET: { label: t('purchase.order.payUnset'), color: 'default' },
+  PAID: { label: t('purchase.order.payPaid'), color: 'green' },
+  UNPAID: { label: t('purchase.order.payUnpaid'), color: 'red' },
+}));
+const ACTUAL_STATUS = computed<Record<ActualStatus, { label: string; color: string }>>(() => ({
+  PENDING_INBOUND: { label: t('purchase.order.actualPendingInbound'), color: 'orange' },
+  INBOUND_DONE: { label: t('purchase.order.actualInboundDone'), color: 'green' },
+}));
 
 const activeTab = ref<'order' | 'actual'>('order');
 const supplierOptions = ref<SelectOption[]>([]);
@@ -60,16 +62,16 @@ const onOrderReset = () => {
   orderQuery.value = {};
 };
 
-const orderColumns: TableColumnsType = [
-  { title: '订单号', dataIndex: 'orderNo', key: 'orderNo' },
-  { title: '计划', dataIndex: 'planId', key: 'planId', width: 90 },
-  { title: '供应商', dataIndex: 'supplierId', key: 'supplierId', width: 150 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '总数量', dataIndex: 'totalQty', key: 'totalQty', width: 80 },
-  { title: '总金额', dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
-  { title: '已付金额', dataIndex: 'paidAmount', key: 'paidAmount', width: 110 },
-  { title: '操作', key: 'action', width: 90 },
-];
+const orderColumns = computed<TableColumnsType>(() => [
+  { title: t('purchase.order.orderNo'), dataIndex: 'orderNo', key: 'orderNo' },
+  { title: t('purchase.order.plan'), dataIndex: 'planId', key: 'planId', width: 90 },
+  { title: t('common.supplier'), dataIndex: 'supplierId', key: 'supplierId', width: 150 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('common.totalQty'), dataIndex: 'totalQty', key: 'totalQty', width: 80 },
+  { title: t('common.totalAmount'), dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
+  { title: t('purchase.order.paidAmount'), dataIndex: 'paidAmount', key: 'paidAmount', width: 110 },
+  { title: t('common.operation'), key: 'action', width: 90 },
+]);
 
 const orderDrawerOpen = ref(false);
 const orderDetail = ref<PurchaseOrderVO | null>(null);
@@ -91,7 +93,7 @@ const canConfirm = computed(
 
 async function markPay(status: PaymentStatus) {
   if (selectedItemIds.value.length === 0) {
-    message.warning('请先选择明细');
+    message.warning(t('purchase.order.selectItemsFirst'));
     return;
   }
   payLoading.value = true;
@@ -100,7 +102,7 @@ async function markPay(status: PaymentStatus) {
       itemIds: selectedItemIds.value,
       paymentStatus: status,
     });
-    message.success('付款状态已更新');
+    message.success(t('purchase.order.payStatusUpdated'));
     orderDetail.value = await apiOrderGet(orderDetail.value!.id);
     selectedItemIds.value = [];
     orderTableRef.value?.reload();
@@ -111,7 +113,7 @@ async function markPay(status: PaymentStatus) {
 
 async function confirmOrder() {
   await apiOrderConfirm(orderDetail.value!.id);
-  message.success('已确认，生成实际采购单');
+  message.success(t('purchase.order.confirmedGenerated'));
   orderDrawerOpen.value = false;
   orderTableRef.value?.reload();
   actualTableRef.value?.reload();
@@ -129,15 +131,15 @@ const onActualReset = () => {
   actualQuery.value = {};
 };
 
-const actualColumns: TableColumnsType = [
-  { title: '实际单号', dataIndex: 'actualNo', key: 'actualNo' },
-  { title: '采购订单', dataIndex: 'purchaseOrderId', key: 'purchaseOrderId', width: 110 },
-  { title: '供应商', dataIndex: 'supplierId', key: 'supplierId', width: 150 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '总数量', dataIndex: 'totalQty', key: 'totalQty', width: 80 },
-  { title: '总金额', dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
-  { title: '操作', key: 'action', width: 90 },
-];
+const actualColumns = computed<TableColumnsType>(() => [
+  { title: t('purchase.order.actualNo'), dataIndex: 'actualNo', key: 'actualNo' },
+  { title: t('purchase.order.tabOrder'), dataIndex: 'purchaseOrderId', key: 'purchaseOrderId', width: 110 },
+  { title: t('common.supplier'), dataIndex: 'supplierId', key: 'supplierId', width: 150 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('common.totalQty'), dataIndex: 'totalQty', key: 'totalQty', width: 80 },
+  { title: t('common.totalAmount'), dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
+  { title: t('common.operation'), key: 'action', width: 90 },
+]);
 
 const actualDrawerOpen = ref(false);
 const actualDetail = ref<ActualPurchaseOrderVO | null>(null);
@@ -157,7 +159,7 @@ async function inbound() {
   try {
     // 整单入库（不传 itemIds）
     await apiActualOrderInbound(actualDetail.value!.id);
-    message.success('已入库，库存已更新');
+    message.success(t('purchase.order.inboundDone'));
     actualDetail.value = await apiActualOrderGet(actualDetail.value!.id);
     actualTableRef.value?.reload();
   } finally {
@@ -174,15 +176,15 @@ defineExpose({
   <a-card :bordered="false">
     <a-tabs v-model:activeKey="activeTab" @change="onTabChange">
       <!-- ============ 采购订单 ============ -->
-      <a-tab-pane key="order" tab="采购订单">
+      <a-tab-pane key="order" :tab="t('purchase.order.tabOrder')">
         <a-form layout="inline" class="mb-3">
-          <a-form-item label="计划ID">
-            <a-input-number v-model:value="orderSearch.planId" placeholder="全部" :controls="false" style="width: 140px" />
+          <a-form-item :label="t('purchase.order.planId')">
+            <a-input-number v-model:value="orderSearch.planId" :placeholder="t('common.all')" :controls="false" style="width: 140px" />
           </a-form-item>
-          <a-form-item label="供应商">
+          <a-form-item :label="t('common.supplier')">
             <a-select
               v-model:value="orderSearch.supplierId"
-              placeholder="全部"
+              :placeholder="t('common.all')"
               show-search
               option-filter-prop="label"
               allow-clear
@@ -191,22 +193,22 @@ defineExpose({
               data-test="order-filter-supplier"
             />
           </a-form-item>
-          <a-form-item label="状态">
+          <a-form-item :label="t('common.status')">
             <a-select
               v-model:value="orderSearch.status"
-              placeholder="全部"
+              :placeholder="t('common.all')"
               allow-clear
               style="width: 130px"
               :options="[
-                { label: '待付款', value: 'PENDING_PAYMENT' },
-                { label: '已确认', value: 'CONFIRMED' },
+                { label: t('purchase.order.statusPendingPayment'), value: 'PENDING_PAYMENT' },
+                { label: t('purchase.order.statusConfirmed'), value: 'CONFIRMED' },
               ]"
             />
           </a-form-item>
           <a-form-item>
             <a-space>
-              <a-button type="primary" data-test="order-search" @click="onOrderSearch">查询</a-button>
-              <a-button @click="onOrderReset">重置</a-button>
+              <a-button type="primary" data-test="order-search" @click="onOrderSearch">{{ t('common.search') }}</a-button>
+              <a-button @click="onOrderReset">{{ t('common.reset') }}</a-button>
             </a-space>
           </a-form-item>
         </a-form>
@@ -222,34 +224,34 @@ defineExpose({
             <template v-else-if="column.key === 'totalAmount'">{{ money(record.totalAmount) }}</template>
             <template v-else-if="column.key === 'paidAmount'">{{ money(record.paidAmount) }}</template>
             <template v-else-if="column.key === 'action'">
-              <a data-test="order-detail" @click="openOrderDetail(record as PurchaseOrderVO)">详情</a>
+              <a data-test="order-detail" @click="openOrderDetail(record as PurchaseOrderVO)">{{ t('common.detail') }}</a>
             </template>
           </template>
         </BasicTable>
       </a-tab-pane>
 
       <!-- ============ 实际采购单 ============ -->
-      <a-tab-pane key="actual" tab="实际采购单">
+      <a-tab-pane key="actual" :tab="t('purchase.order.tabActual')">
         <a-form layout="inline" class="mb-3">
-          <a-form-item label="采购订单ID">
-            <a-input-number v-model:value="actualSearch.purchaseOrderId" placeholder="全部" :controls="false" style="width: 160px" />
+          <a-form-item :label="t('purchase.order.purchaseOrderId')">
+            <a-input-number v-model:value="actualSearch.purchaseOrderId" :placeholder="t('common.all')" :controls="false" style="width: 160px" />
           </a-form-item>
-          <a-form-item label="状态">
+          <a-form-item :label="t('common.status')">
             <a-select
               v-model:value="actualSearch.status"
-              placeholder="全部"
+              :placeholder="t('common.all')"
               allow-clear
               style="width: 130px"
               :options="[
-                { label: '待入库', value: 'PENDING_INBOUND' },
-                { label: '已入库', value: 'INBOUND_DONE' },
+                { label: t('purchase.order.actualPendingInbound'), value: 'PENDING_INBOUND' },
+                { label: t('purchase.order.actualInboundDone'), value: 'INBOUND_DONE' },
               ]"
             />
           </a-form-item>
           <a-form-item>
             <a-space>
-              <a-button type="primary" data-test="actual-search" @click="onActualSearch">查询</a-button>
-              <a-button @click="onActualReset">重置</a-button>
+              <a-button type="primary" data-test="actual-search" @click="onActualSearch">{{ t('common.search') }}</a-button>
+              <a-button @click="onActualReset">{{ t('common.reset') }}</a-button>
             </a-space>
           </a-form-item>
         </a-form>
@@ -264,7 +266,7 @@ defineExpose({
             </template>
             <template v-else-if="column.key === 'totalAmount'">{{ money(record.totalAmount) }}</template>
             <template v-else-if="column.key === 'action'">
-              <a data-test="actual-detail" @click="openActualDetail(record as ActualPurchaseOrderVO)">详情</a>
+              <a data-test="actual-detail" @click="openActualDetail(record as ActualPurchaseOrderVO)">{{ t('common.detail') }}</a>
             </template>
           </template>
         </BasicTable>
@@ -272,33 +274,33 @@ defineExpose({
     </a-tabs>
 
     <!-- 采购订单详情：付款 + 确认 -->
-    <a-drawer v-model:open="orderDrawerOpen" title="采购订单详情" width="860" destroy-on-close>
+    <a-drawer v-model:open="orderDrawerOpen" :title="t('purchase.order.orderDetailTitle')" width="860" destroy-on-close>
       <template v-if="orderDetail">
         <a-descriptions size="small" :column="2" bordered class="mb-3">
-          <a-descriptions-item label="订单号">{{ orderDetail.orderNo }}</a-descriptions-item>
-          <a-descriptions-item label="状态">{{ ORDER_STATUS[orderDetail.status].label }}</a-descriptions-item>
-          <a-descriptions-item label="供应商">{{ supplierName(orderDetail.supplierId) }}</a-descriptions-item>
-          <a-descriptions-item label="总金额 (GHS)">{{ money(orderDetail.totalAmount) }}</a-descriptions-item>
-          <a-descriptions-item label="已付金额 (GHS)">{{ money(orderDetail.paidAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.order.orderNo')">{{ orderDetail.orderNo }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.status')">{{ ORDER_STATUS[orderDetail.status].label }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.supplier')">{{ supplierName(orderDetail.supplierId) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.order.totalAmountGhs')">{{ money(orderDetail.totalAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.order.paidAmountGhs')">{{ money(orderDetail.paidAmount) }}</a-descriptions-item>
         </a-descriptions>
 
         <div v-if="orderDetail.status === 'PENDING_PAYMENT'" class="mb-2">
           <a-space>
-            <span class="text-gray-500">批量标记：</span>
-            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" data-test="mark-paid" @click="markPay('PAID')">标记已付</a-button>
-            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" @click="markPay('UNPAID')">标记未付</a-button>
-            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" @click="markPay('UNSET')">重置</a-button>
+            <span class="text-gray-500">{{ t('purchase.order.batchMark') }}</span>
+            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" data-test="mark-paid" @click="markPay('PAID')">{{ t('purchase.order.markPaid') }}</a-button>
+            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" @click="markPay('UNPAID')">{{ t('purchase.order.markUnpaid') }}</a-button>
+            <a-button v-perm="'purchase:order:pay'" size="small" :loading="payLoading" @click="markPay('UNSET')">{{ t('common.reset') }}</a-button>
           </a-space>
         </div>
 
         <a-table
           :columns="[
-            { title: '名称', dataIndex: 'productName', key: 'productName' },
-            { title: '编码', dataIndex: 'productCode', key: 'productCode', width: 120 },
-            { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
-            { title: '数量', dataIndex: 'qty', key: 'qty', width: 70 },
-            { title: '小计', dataIndex: 'amount', key: 'amount', width: 100 },
-            { title: '付款', dataIndex: 'paymentStatus', key: 'paymentStatus', width: 90 },
+            { title: t('common.name'), dataIndex: 'productName', key: 'productName' },
+            { title: t('common.code'), dataIndex: 'productCode', key: 'productCode', width: 120 },
+            { title: t('common.wholesalePrice'), dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
+            { title: t('common.quantity'), dataIndex: 'qty', key: 'qty', width: 70 },
+            { title: t('common.subtotal'), dataIndex: 'amount', key: 'amount', width: 100 },
+            { title: t('purchase.order.payment'), dataIndex: 'paymentStatus', key: 'paymentStatus', width: 90 },
           ]"
           :data-source="orderDetail.items"
           :pagination="false"
@@ -322,15 +324,15 @@ defineExpose({
 
       <template #footer>
         <a-space>
-          <a-button @click="orderDrawerOpen = false">关闭</a-button>
-          <a-popconfirm title="确认生成实际采购单？" @confirm="confirmOrder">
+          <a-button @click="orderDrawerOpen = false">{{ t('common.close') }}</a-button>
+          <a-popconfirm :title="t('purchase.order.confirmGenerateActual')" @confirm="confirmOrder">
             <a-button
               v-perm="'purchase:order:confirm'"
               type="primary"
               :disabled="!canConfirm"
               data-test="order-confirm"
             >
-              确认生成实际采购单
+              {{ t('purchase.order.confirmGenerateActualBtn') }}
             </a-button>
           </a-popconfirm>
         </a-space>
@@ -338,23 +340,23 @@ defineExpose({
     </a-drawer>
 
     <!-- 实际采购单详情：入库 -->
-    <a-drawer v-model:open="actualDrawerOpen" title="实际采购单详情" width="820" destroy-on-close>
+    <a-drawer v-model:open="actualDrawerOpen" :title="t('purchase.order.actualDetailTitle')" width="820" destroy-on-close>
       <template v-if="actualDetail">
         <a-descriptions size="small" :column="2" bordered class="mb-3">
-          <a-descriptions-item label="实际单号">{{ actualDetail.actualNo }}</a-descriptions-item>
-          <a-descriptions-item label="状态">{{ ACTUAL_STATUS[actualDetail.status].label }}</a-descriptions-item>
-          <a-descriptions-item label="供应商">{{ supplierName(actualDetail.supplierId) }}</a-descriptions-item>
-          <a-descriptions-item label="总金额 (GHS)">{{ money(actualDetail.totalAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.order.actualNo')">{{ actualDetail.actualNo }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.status')">{{ ACTUAL_STATUS[actualDetail.status].label }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.supplier')">{{ supplierName(actualDetail.supplierId) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.order.totalAmountGhs')">{{ money(actualDetail.totalAmount) }}</a-descriptions-item>
         </a-descriptions>
 
         <a-table
           :columns="[
-            { title: '名称', dataIndex: 'productName', key: 'productName' },
-            { title: '数量', dataIndex: 'qty', key: 'qty', width: 80 },
-            { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
-            { title: '小计', dataIndex: 'amount', key: 'amount', width: 100 },
-            { title: '入库状态', dataIndex: 'inboundStatus', key: 'inboundStatus', width: 100 },
-            { title: '入库量', dataIndex: 'inboundQty', key: 'inboundQty', width: 80 },
+            { title: t('common.name'), dataIndex: 'productName', key: 'productName' },
+            { title: t('common.quantity'), dataIndex: 'qty', key: 'qty', width: 80 },
+            { title: t('common.wholesalePrice'), dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
+            { title: t('common.subtotal'), dataIndex: 'amount', key: 'amount', width: 100 },
+            { title: t('purchase.order.inboundStatus'), dataIndex: 'inboundStatus', key: 'inboundStatus', width: 100 },
+            { title: t('purchase.order.inboundQty'), dataIndex: 'inboundQty', key: 'inboundQty', width: 80 },
           ]"
           :data-source="actualDetail.items"
           :pagination="false"
@@ -366,7 +368,7 @@ defineExpose({
             <template v-else-if="column.key === 'amount'">{{ money(record.amount) }}</template>
             <template v-else-if="column.key === 'inboundStatus'">
               <a-tag :color="record.inboundStatus === 'DONE' ? 'green' : 'orange'">
-                {{ record.inboundStatus === 'DONE' ? '已入库' : '待入库' }}
+                {{ record.inboundStatus === 'DONE' ? t('purchase.order.actualInboundDone') : t('purchase.order.actualPendingInbound') }}
               </a-tag>
             </template>
           </template>
@@ -375,8 +377,8 @@ defineExpose({
 
       <template #footer>
         <a-space>
-          <a-button @click="actualDrawerOpen = false">关闭</a-button>
-          <a-popconfirm title="确认整单入库？" @confirm="inbound">
+          <a-button @click="actualDrawerOpen = false">{{ t('common.close') }}</a-button>
+          <a-popconfirm :title="t('purchase.order.confirmInboundAll')" @confirm="inbound">
             <a-button
               v-perm="'inventory:inbound'"
               type="primary"
@@ -384,7 +386,7 @@ defineExpose({
               :disabled="!canInbound"
               data-test="actual-inbound"
             >
-              整单入库
+              {{ t('purchase.order.inboundAll') }}
             </a-button>
           </a-popconfirm>
         </a-space>
