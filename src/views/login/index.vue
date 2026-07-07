@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 
+const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
@@ -27,15 +29,15 @@ async function onSubmit() {
 
 <template>
   <div class="h-screen flex items-center justify-center bg-gray-100">
-    <a-card title="ZokoMart Admin" class="w-96">
+    <a-card :title="t('login.title')" class="w-96">
       <a-form layout="vertical">
-        <a-form-item label="用户名">
-          <a-input v-model:value="form.username" placeholder="superadmin" @press-enter="onSubmit" />
+        <a-form-item :label="t('login.username')">
+          <a-input v-model:value="form.username" :placeholder="t('login.usernamePlaceholder')" @press-enter="onSubmit" />
         </a-form-item>
-        <a-form-item label="密码">
-          <a-input-password v-model:value="form.password" placeholder="密码" @press-enter="onSubmit" />
+        <a-form-item :label="t('login.password')">
+          <a-input-password v-model:value="form.password" :placeholder="t('login.passwordPlaceholder')" @press-enter="onSubmit" />
         </a-form-item>
-        <a-button type="primary" block :loading="loading" @click="onSubmit">登录</a-button>
+        <a-button type="primary" block :loading="loading" @click="onSubmit">{{ t('login.submit') }}</a-button>
       </a-form>
     </a-card>
   </div>
