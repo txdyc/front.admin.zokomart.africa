@@ -35,6 +35,22 @@ export default {
     uploadTooLarge: '图片不能超过 {size}MB',
     uploadFailed: '上传失败',
   },
+  system: {
+    user: {
+      title: '用户',
+      username: '用户名', nickname: '昵称', phone: '手机号', email: '邮箱',
+      password: '密码', passwordEdit: '密码（留空不修改）',
+      passwordEmptyHint: '留空表示不修改', passwordInitHint: '请输入初始密码',
+      enable: '启用',
+      createUser: '新增用户', editUser: '编辑用户', assignRole: '分配角色',
+      assignRoleAction: '赋角色', resetPwd: '重置密码', selectRole: '选择角色',
+      newPwdPlaceholder: '请输入新密码', inputNewPwd: '请输入新密码',
+      inputUsername: '请输入用户名',
+      toggleConfirm: '确认{action}该用户？', deleteConfirm: '确认删除该用户？',
+      roleUpdated: '角色已更新', pwdReset: '密码已重置',
+      usernamePlaceholder: '用户名',
+    },
+  },
   supplierBrand: {
     title: '管理品牌授权',
     allBrands: '全部品牌',

@@ -35,6 +35,22 @@ export default {
     uploadTooLarge: 'Image must be smaller than {size}MB',
     uploadFailed: 'Upload failed',
   },
+  system: {
+    user: {
+      title: 'User',
+      username: 'Username', nickname: 'Nickname', phone: 'Phone', email: 'Email',
+      password: 'Password', passwordEdit: 'Password (leave blank to keep)',
+      passwordEmptyHint: 'Leave blank to keep unchanged', passwordInitHint: 'Enter an initial password',
+      enable: 'Enabled',
+      createUser: 'New User', editUser: 'Edit User', assignRole: 'Assign Roles',
+      assignRoleAction: 'Roles', resetPwd: 'Reset Password', selectRole: 'Select roles',
+      newPwdPlaceholder: 'Enter a new password', inputNewPwd: 'Enter a new password',
+      inputUsername: 'Please enter a username',
+      toggleConfirm: 'Confirm to {action} this user?', deleteConfirm: 'Delete this user?',
+      roleUpdated: 'Roles updated', pwdReset: 'Password reset',
+      usernamePlaceholder: 'Username',
+    },
+  },
   supplierBrand: {
     title: 'Manage Brand Authorization',
     allBrands: 'All Brands',

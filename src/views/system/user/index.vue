@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -17,8 +18,15 @@ import type { UserVO, UserSaveDTO } from '@/types/system';
 import type { Id } from '@/types/api';
 import type { SelectOption } from '@/components/SchemaForm.vue';
 
+const { t } = useI18n();
+
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
+
+const statusOptions = computed(() => [
+  { label: t('common.enabled'), value: 1 },
+  { label: t('common.disabled'), value: 0 },
+]);
 
 // ---- 查询 ----
 const searchForm = reactive<{ username?: string; status?: number }>({});
@@ -32,15 +40,15 @@ function onReset() {
   query.value = {};
 }
 
-const columns: TableColumnsType = [
-  { title: '用户名', dataIndex: 'username', key: 'username' },
-  { title: '昵称', dataIndex: 'nickname', key: 'nickname' },
-  { title: '手机号', dataIndex: 'phone', key: 'phone' },
-  { title: '邮箱', dataIndex: 'email', key: 'email' },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '操作', key: 'action', width: 280 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('system.user.username'), dataIndex: 'username', key: 'username' },
+  { title: t('system.user.nickname'), dataIndex: 'nickname', key: 'nickname' },
+  { title: t('system.user.phone'), dataIndex: 'phone', key: 'phone' },
+  { title: t('system.user.email'), dataIndex: 'email', key: 'email' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 90 },
+  { title: t('common.createTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: t('common.operation'), key: 'action', width: 280 },
+]);
 
 // ---- 新增/编辑弹窗 ----
 const modalOpen = ref(false);
@@ -51,22 +59,22 @@ const submitting = ref(false);
 const formSchema = computed<FormField[]>(() => [
   {
     field: 'username',
-    label: '用户名',
+    label: t('system.user.username'),
     component: 'input',
-    rules: [{ required: true, message: '请输入用户名' }],
+    rules: [{ required: true, message: t('system.user.inputUsername') }],
   },
   {
     field: 'password',
-    label: editingId.value ? '密码（留空不修改）' : '密码',
+    label: editingId.value ? t('system.user.passwordEdit') : t('system.user.password'),
     component: 'password',
-    placeholder: editingId.value ? '留空表示不修改' : '请输入初始密码',
-    rules: editingId.value ? [] : [{ required: true, message: '请输入初始密码' }],
+    placeholder: editingId.value ? t('system.user.passwordEmptyHint') : t('system.user.passwordInitHint'),
+    rules: editingId.value ? [] : [{ required: true, message: t('system.user.passwordInitHint') }],
   },
-  { field: 'nickname', label: '昵称', component: 'input' },
-  { field: 'phone', label: '手机号', component: 'input' },
-  { field: 'email', label: '邮箱', component: 'input' },
-  { field: 'status', label: '启用', component: 'switch' },
-  { field: 'remark', label: '备注', component: 'textarea' },
+  { field: 'nickname', label: t('system.user.nickname'), component: 'input' },
+  { field: 'phone', label: t('system.user.phone'), component: 'input' },
+  { field: 'email', label: t('system.user.email'), component: 'input' },
+  { field: 'status', label: t('system.user.enable'), component: 'switch' },
+  { field: 'remark', label: t('common.remark'), component: 'textarea' },
 ]);
 
 function openCreate() {
@@ -97,7 +105,7 @@ async function onSubmit() {
     } else {
       await apiUserCreate(values);
     }
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -115,13 +123,13 @@ async function onToggleStatus(row: UserVO) {
     remark: row.remark,
     status: row.status === 1 ? 0 : 1,
   });
-  message.success('操作成功');
+  message.success(t('common.operateSuccess'));
   tableRef.value?.reload();
 }
 
 async function onDelete(row: UserVO) {
   await apiUserDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 
@@ -139,7 +147,7 @@ async function openRoles(row: UserVO) {
 }
 async function onSubmitRoles() {
   await apiUserSetRoles(rolesTargetId.value!, selectedRoleIds.value);
-  message.success('角色已更新');
+  message.success(t('system.user.roleUpdated'));
   rolesOpen.value = false;
   tableRef.value?.reload();
 }
@@ -155,11 +163,11 @@ function openResetPwd(row: UserVO) {
 }
 async function onSubmitPwd() {
   if (!newPwd.value) {
-    message.warning('请输入新密码');
+    message.warning(t('system.user.inputNewPwd'));
     return;
   }
   await apiUserResetPwd(pwdTargetId.value!, newPwd.value);
-  message.success('密码已重置');
+  message.success(t('system.user.pwdReset'));
   pwdOpen.value = false;
 }
 
@@ -170,30 +178,27 @@ defineExpose({ openCreate, openEdit, onSubmit });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="用户名">
+        <a-form-item :label="t('system.user.username')">
           <a-input
             v-model:value="searchForm.username"
-            placeholder="用户名"
+            :placeholder="t('system.user.usernamePlaceholder')"
             allow-clear
             @press-enter="onSearch"
           />
         </a-form-item>
-        <a-form-item label="状态">
+        <a-form-item :label="t('common.status')">
           <a-select
             v-model:value="searchForm.status"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             allow-clear
             style="width: 120px"
-            :options="[
-              { label: '启用', value: 1 },
-              { label: '停用', value: 0 },
-            ]"
+            :options="statusOptions"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -202,7 +207,7 @@ defineExpose({ openCreate, openEdit, onSubmit });
     <a-card :bordered="false">
       <div class="mb-3">
         <a-button v-perm="'system:user:create'" type="primary" data-test="user-create" @click="openCreate">
-          新增用户
+          {{ t('system.user.createUser') }}
         </a-button>
       </div>
 
@@ -210,27 +215,27 @@ defineExpose({ openCreate, openEdit, onSubmit });
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '启用' : '停用' }}
+              {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'system:user:update'" @click="openEdit(record)">编辑</a>
-              <a v-perm="'system:user:update'" @click="openRoles(record)">赋角色</a>
-              <a v-perm="'system:user:resetPwd'" @click="openResetPwd(record)">重置密码</a>
+              <a v-perm="'system:user:update'" @click="openEdit(record)">{{ t('common.edit') }}</a>
+              <a v-perm="'system:user:update'" @click="openRoles(record)">{{ t('system.user.assignRoleAction') }}</a>
+              <a v-perm="'system:user:resetPwd'" @click="openResetPwd(record)">{{ t('system.user.resetPwd') }}</a>
               <a-popconfirm
                 v-if="record.isSuper !== 1"
-                :title="`确认${record.status === 1 ? '停用' : '启用'}该用户？`"
+                :title="t('system.user.toggleConfirm', { action: record.status === 1 ? t('common.disabled') : t('common.enabled') })"
                 @confirm="onToggleStatus(record)"
               >
-                <a v-perm="'system:user:update'">{{ record.status === 1 ? '停用' : '启用' }}</a>
+                <a v-perm="'system:user:update'">{{ record.status === 1 ? t('common.disabled') : t('common.enabled') }}</a>
               </a-popconfirm>
               <a-popconfirm
                 v-if="record.isSuper !== 1"
-                title="确认删除该用户？"
+                :title="t('system.user.deleteConfirm')"
                 @confirm="onDelete(record)"
               >
-                <a v-perm="'system:user:delete'" class="text-red-500">删除</a>
+                <a v-perm="'system:user:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -241,7 +246,7 @@ defineExpose({ openCreate, openEdit, onSubmit });
     <!-- 新增/编辑 -->
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑用户' : '新增用户'"
+      :title="editingId ? t('system.user.editUser') : t('system.user.createUser')"
       :confirm-loading="submitting"
       destroy-on-close
       @ok="onSubmit"
@@ -250,19 +255,19 @@ defineExpose({ openCreate, openEdit, onSubmit });
     </a-modal>
 
     <!-- 赋角色 -->
-    <a-modal v-model:open="rolesOpen" title="分配角色" @ok="onSubmitRoles">
+    <a-modal v-model:open="rolesOpen" :title="t('system.user.assignRole')" @ok="onSubmitRoles">
       <a-select
         v-model:value="selectedRoleIds"
         mode="multiple"
         class="w-full"
-        placeholder="选择角色"
+        :placeholder="t('system.user.selectRole')"
         :options="roleOptions"
       />
     </a-modal>
 
     <!-- 重置密码 -->
-    <a-modal v-model:open="pwdOpen" title="重置密码" @ok="onSubmitPwd">
-      <a-input-password v-model:value="newPwd" placeholder="请输入新密码" />
+    <a-modal v-model:open="pwdOpen" :title="t('system.user.resetPwd')" @ok="onSubmitPwd">
+      <a-input-password v-model:value="newPwd" :placeholder="t('system.user.newPwdPlaceholder')" />
     </a-modal>
   </div>
 </template>
