@@ -1,5 +1,6 @@
 import { reactive, ref, type Ref } from 'vue';
 import type { PageResult } from '@/types/api';
+import { t } from '@/locales';
 
 export interface CrudTableOptions {
   defaultSize?: number;
@@ -26,7 +27,7 @@ export function useCrudTable<T = any>(
     pageSize: defaultSize,
     total: 0,
     showSizeChanger: true,
-    showTotal: (total: number) => `共 ${total} 条`,
+    showTotal: (total: number) => t('common.total', { n: total }),
   });
 
   async function load() {
