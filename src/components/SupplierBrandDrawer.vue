@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import { apiBrandPage } from '@/api/basedata/brand';
 import { apiAuthorizedBrands, apiAssignBrands } from '@/api/basedata/supplierBrand';
@@ -7,6 +8,8 @@ import type { Id } from '@/types/api';
 
 const props = defineProps<{ supplierId: Id | null; open: boolean }>();
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'saved'): void }>();
+
+const { t } = useI18n();
 
 interface Item {
   key: string;
@@ -48,7 +51,7 @@ async function onSave() {
   saving.value = true;
   try {
     await apiAssignBrands(props.supplierId, targetKeys.value);
-    message.success('已保存品牌授权');
+    message.success(t('supplierBrand.saved'));
     emit('saved');
     emit('update:open', false);
   } finally {
@@ -64,12 +67,12 @@ defineExpose({ load, onSave, targetKeys, dataSource });
 </script>
 
 <template>
-  <a-drawer :open="open" title="管理品牌授权" :width="520" @close="onClose">
+  <a-drawer :open="open" :title="t('supplierBrand.title')" :width="520" @close="onClose">
     <a-spin :spinning="loading">
       <a-transfer
         :data-source="dataSource"
         :target-keys="targetKeys"
-        :titles="['全部品牌', '已授权']"
+        :titles="[t('supplierBrand.allBrands'), t('supplierBrand.authorized')]"
         :render="(item: any) => item.title"
         :list-style="{ width: '220px', height: '420px' }"
         @change="onChange"
@@ -77,8 +80,8 @@ defineExpose({ load, onSave, targetKeys, dataSource });
     </a-spin>
     <template #footer>
       <a-space>
-        <a-button @click="onClose">取消</a-button>
-        <a-button type="primary" :loading="saving" @click="onSave">保存</a-button>
+        <a-button @click="onClose">{{ t('common.cancel') }}</a-button>
+        <a-button type="primary" :loading="saving" @click="onSave">{{ t('common.save') }}</a-button>
       </a-space>
     </template>
   </a-drawer>

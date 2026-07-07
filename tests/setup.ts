@@ -1,5 +1,10 @@
 // Vitest 全局环境补丁：jsdom 缺少 antd 组件用到的浏览器 API。
 import { vi } from 'vitest';
+import { config } from '@vue/test-utils';
+import { i18n } from '@/locales';
+
+// 组件用 useI18n() 需要注入 i18n 插件，测试挂载时全局注册。
+config.global.plugins = [...(config.global.plugins ?? []), i18n];
 
 if (!window.matchMedia) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({

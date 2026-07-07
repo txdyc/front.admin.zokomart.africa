@@ -35,6 +35,29 @@ export default {
     uploadTooLarge: 'Image must be smaller than {size}MB',
     uploadFailed: 'Upload failed',
   },
+  supplierBrand: {
+    title: 'Manage Brand Authorization',
+    allBrands: 'All Brands',
+    authorized: 'Authorized',
+    saved: 'Brand authorization saved',
+  },
+  cascade: {
+    supplier: 'Supplier',
+    selectSupplier: 'Select a supplier',
+    brand: 'Brand',
+    category: 'Category',
+    keyword: 'Keyword',
+    keywordPlaceholder: 'Name / Code',
+  },
+  error: {
+    forbidden: 'Sorry, you are not authorized to access this page.',
+    notFound: 'Sorry, this page does not exist.',
+  },
+  dashboard: {
+    title: 'Dashboard',
+    welcome: 'Welcome, {name}.',
+    subtitle: 'ZokoMart storefront admin system.',
+  },
   language: { label: 'Language', zh: '中文', en: 'English' },
   app: { name: 'ZokoMart', logout: 'Logout' },
   login: {

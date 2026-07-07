@@ -35,6 +35,29 @@ export default {
     uploadTooLarge: '图片不能超过 {size}MB',
     uploadFailed: '上传失败',
   },
+  supplierBrand: {
+    title: '管理品牌授权',
+    allBrands: '全部品牌',
+    authorized: '已授权',
+    saved: '已保存品牌授权',
+  },
+  cascade: {
+    supplier: '供应商',
+    selectSupplier: '请选择供应商',
+    brand: '品牌',
+    category: '分类',
+    keyword: '关键字',
+    keywordPlaceholder: '名称/编码',
+  },
+  error: {
+    forbidden: '抱歉，你无权访问该页面。',
+    notFound: '抱歉，页面不存在。',
+  },
+  dashboard: {
+    title: '工作台',
+    welcome: '欢迎，{name}。',
+    subtitle: 'ZokoMart 独立站后台管理系统。',
+  },
   language: { label: '语言', zh: '中文', en: 'English' },
   app: { name: 'ZokoMart', logout: '退出登录' },
   login: {
