@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -20,6 +21,8 @@ import { apiCategoryTree } from '@/api/basedata/category';
 import type { SupplierProductVO, SupplierProductSaveDTO, SupplierProductQuery } from '@/types/product';
 import type { CategoryVO } from '@/types/basedata';
 import type { Id } from '@/types/api';
+
+const { t } = useI18n();
 
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
@@ -68,38 +71,38 @@ onMounted(() => {
   loadCategories();
 });
 
-const columns: TableColumnsType = [
-  { title: '图片', dataIndex: 'imageUrl', key: 'imageUrl', width: 70 },
-  { title: '名称', dataIndex: 'name', key: 'name' },
-  { title: '产品编码', dataIndex: 'productCode', key: 'productCode', width: 130 },
-  { title: '供应商', dataIndex: 'supplierId', key: 'supplierId', width: 140 },
-  { title: '品牌', dataIndex: 'brandId', key: 'brandId', width: 120 },
-  { title: '分类', dataIndex: 'categoryId', key: 'categoryId', width: 140 },
-  { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
-  { title: '零售价', dataIndex: 'retailPrice', key: 'retailPrice', width: 90 },
+const columns = computed<TableColumnsType>(() => [
+  { title: t('product.supplierProduct.image'), dataIndex: 'imageUrl', key: 'imageUrl', width: 70 },
+  { title: t('product.supplierProduct.name'), dataIndex: 'name', key: 'name' },
+  { title: t('product.supplierProduct.productCode'), dataIndex: 'productCode', key: 'productCode', width: 130 },
+  { title: t('product.supplierProduct.supplier'), dataIndex: 'supplierId', key: 'supplierId', width: 140 },
+  { title: t('product.supplierProduct.brand'), dataIndex: 'brandId', key: 'brandId', width: 120 },
+  { title: t('product.supplierProduct.category'), dataIndex: 'categoryId', key: 'categoryId', width: 140 },
+  { title: t('product.supplierProduct.wholesalePrice'), dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
+  { title: t('product.supplierProduct.retailPrice'), dataIndex: 'retailPrice', key: 'retailPrice', width: 90 },
   { title: 'MOQ', dataIndex: 'minPurchaseQty', key: 'minPurchaseQty', width: 70 },
-  { title: '每箱量', dataIndex: 'qtyPerBox', key: 'qtyPerBox', width: 80 },
-  { title: '箱价', dataIndex: 'boxPrice', key: 'boxPrice', width: 90 },
-  { title: '库存状态', dataIndex: 'stockStatus', key: 'stockStatus', width: 120 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '操作', key: 'action', width: 140 },
-];
+  { title: t('product.supplierProduct.qtyPerBox'), dataIndex: 'qtyPerBox', key: 'qtyPerBox', width: 80 },
+  { title: t('product.supplierProduct.boxPrice'), dataIndex: 'boxPrice', key: 'boxPrice', width: 90 },
+  { title: t('product.supplierProduct.stockStatus'), dataIndex: 'stockStatus', key: 'stockStatus', width: 120 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 80 },
+  { title: t('common.operation'), key: 'action', width: 140 },
+]);
 
 const formSchema = computed<FormField[]>(() => [
-  { field: 'supplierId', label: '供应商', component: 'select', options: supplierOptions.value, rules: [{ required: true, message: '请选择供应商' }] },
-  { field: 'name', label: '产品名称', component: 'input', rules: [{ required: true, message: '请输入产品名称' }] },
-  { field: 'productCode', label: '产品编码', component: 'input', rules: [{ required: true, message: '请输入产品编码' }] },
-  { field: 'brandId', label: '品牌', component: 'select', options: brandOptions.value, placeholder: '请选择品牌' },
-  { field: 'categoryId', label: '分类', component: 'select', options: categoryOptions.value, placeholder: '请选择分类' },
-  { field: 'wholesalePrice', label: '批发价 (GHS)', component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: '批发价不能为负' }] },
-  { field: 'retailPrice', label: '零售价 (GHS)', component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: '零售价不能为负' }] },
-  { field: 'minPurchaseQty', label: '最小采购量 (MOQ)', component: 'number', props: { min: 1, precision: 0 }, rules: [{ type: 'number', min: 1, message: '最小采购量不能小于 1' }] },
-  { field: 'qtyPerBox', label: '每箱数量', component: 'number', props: { min: 0, precision: 0 } },
-  { field: 'boxPrice', label: '整箱价 (GHS)', component: 'number', props: { min: 0, precision: 2 } },
-  { field: 'stockStatus', label: '库存状态', component: 'input' },
-  { field: 'imageUrl', label: '图片地址', component: 'input', placeholder: '图片 URL' },
-  { field: 'status', label: '启用', component: 'switch' },
-  { field: 'remark', label: '备注', component: 'textarea' },
+  { field: 'supplierId', label: t('product.supplierProduct.supplier'), component: 'select', options: supplierOptions.value, rules: [{ required: true, message: t('product.supplierProduct.selectSupplier') }] },
+  { field: 'name', label: t('product.supplierProduct.productName'), component: 'input', rules: [{ required: true, message: t('product.supplierProduct.inputProductName') }] },
+  { field: 'productCode', label: t('product.supplierProduct.productCode'), component: 'input', rules: [{ required: true, message: t('product.supplierProduct.inputProductCode') }] },
+  { field: 'brandId', label: t('product.supplierProduct.brand'), component: 'select', options: brandOptions.value, placeholder: t('product.supplierProduct.selectBrand') },
+  { field: 'categoryId', label: t('product.supplierProduct.category'), component: 'select', options: categoryOptions.value, placeholder: t('product.supplierProduct.selectCategory') },
+  { field: 'wholesalePrice', label: t('product.supplierProduct.wholesalePriceLabel'), component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: t('product.supplierProduct.wholesaleNegative') }] },
+  { field: 'retailPrice', label: t('product.supplierProduct.retailPriceLabel'), component: 'number', props: { min: 0, precision: 2 }, rules: [{ type: 'number', min: 0, message: t('product.supplierProduct.retailNegative') }] },
+  { field: 'minPurchaseQty', label: t('product.supplierProduct.minPurchaseQty'), component: 'number', props: { min: 1, precision: 0 }, rules: [{ type: 'number', min: 1, message: t('product.supplierProduct.minQtyMin') }] },
+  { field: 'qtyPerBox', label: t('product.supplierProduct.qtyPerBoxLabel'), component: 'number', props: { min: 0, precision: 0 } },
+  { field: 'boxPrice', label: t('product.supplierProduct.boxPriceLabel'), component: 'number', props: { min: 0, precision: 2 } },
+  { field: 'stockStatus', label: t('product.supplierProduct.stockStatus'), component: 'input' },
+  { field: 'imageUrl', label: t('product.supplierProduct.imageUrl'), component: 'input', placeholder: t('product.supplierProduct.imageUrlPlaceholder') },
+  { field: 'status', label: t('product.supplierProduct.enable'), component: 'switch' },
+  { field: 'remark', label: t('common.remark'), component: 'textarea' },
 ]);
 
 const modalOpen = ref(false);
@@ -157,18 +160,18 @@ async function onSubmit() {
   const payload = formRef.value!.getValues() as SupplierProductSaveDTO;
   // 业务兜底校验（与后端 DTO 一致）
   if (payload.minPurchaseQty != null && payload.minPurchaseQty < 1) {
-    message.warning('最小采购量不能小于 1');
+    message.warning(t('product.supplierProduct.minQtyMin'));
     return;
   }
   if ((payload.wholesalePrice ?? 0) < 0 || (payload.retailPrice ?? 0) < 0) {
-    message.warning('价格不能为负');
+    message.warning(t('product.supplierProduct.priceNegative'));
     return;
   }
   submitting.value = true;
   try {
     if (editingId.value) await apiSupplierProductUpdate(editingId.value, payload);
     else await apiSupplierProductCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -178,7 +181,7 @@ async function onSubmit() {
 
 async function onDelete(row: SupplierProductVO) {
   await apiSupplierProductDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 
@@ -200,16 +203,16 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
             data-test="supplier-product-create"
             @click="openCreate"
           >
-            新增供应商产品
+            {{ t('product.supplierProduct.create') }}
           </a-button>
           <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-import" @click="openImport">
-            导入
+            {{ t('product.supplierProduct.importBtn') }}
           </a-button>
           <a-button v-perm="'supplierProduct:import'" data-test="supplier-product-scrape" @click="openScrape">
-            从URL获取
+            {{ t('product.supplierProduct.scrapeBtn') }}
           </a-button>
           <a-button v-perm="'wc:sync'" data-test="supplier-product-wc-sync" @click="openWcSync">
-            同步到独立站
+            {{ t('product.supplierProduct.wcSyncBtn') }}
           </a-button>
         </a-space>
       </div>
@@ -231,14 +234,14 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
           </template>
           <template v-else-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '启用' : '停用' }}
+              {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'supplierProduct:update'" @click="openEdit(record as SupplierProductVO)">编辑</a>
-              <a-popconfirm title="确认删除该供应商产品？" @confirm="onDelete(record as SupplierProductVO)">
-                <a v-perm="'supplierProduct:delete'" class="text-red-500">删除</a>
+              <a v-perm="'supplierProduct:update'" @click="openEdit(record as SupplierProductVO)">{{ t('common.edit') }}</a>
+              <a-popconfirm :title="t('product.supplierProduct.deleteConfirm')" @confirm="onDelete(record as SupplierProductVO)">
+                <a v-perm="'supplierProduct:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -248,7 +251,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, onFilterChange, openImp
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑供应商产品' : '新增供应商产品'"
+      :title="editingId ? t('product.supplierProduct.edit') : t('product.supplierProduct.create')"
       :confirm-loading="submitting"
       :width="640"
       destroy-on-close

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { SelectOption } from '@/components/SchemaForm.vue';
 import { apiScrapeProducts, apiImportScraped } from '@/api/product/supplierProduct';
@@ -16,6 +17,8 @@ const emit = defineEmits<{
   (e: 'update:open', v: boolean): void;
   (e: 'imported'): void;
 }>();
+
+const { t } = useI18n();
 
 const form = reactive<{ supplierId?: Id; brandId?: Id; url: string; mode: 'skip' | 'overwrite' }>({
   url: '',
@@ -34,7 +37,7 @@ async function loadBrands(supplierId?: Id) {
   const list = await apiAuthorizedBrands(supplierId);
   brandOptions.value = list.map((b) => ({ label: b.brandName ?? String(b.brandId), value: b.brandId }));
   if (brandOptions.value.length === 0) {
-    message.warning('该供应商暂无已授权品牌，请先在供应商管理里授权');
+    message.warning(t('product.supplierProduct.noAuthorizedBrandsHint'));
   }
 }
 
@@ -57,20 +60,20 @@ watch(() => form.supplierId, (v) => loadBrands(v));
 // 真正提交导入用的是 rows.value（纯 ScrapedProductRow[]），不含 _idx。
 const previewData = computed(() => rows.value.map((r, i) => ({ ...r, _idx: i })));
 
-const previewColumns = [
+const previewColumns = computed(() => [
   { title: '#', key: 'idx', width: 50, customRender: ({ index }: { index: number }) => index + 1 },
-  { title: '名称', dataIndex: 'productName' },
-  { title: '编码', dataIndex: 'productCode', width: 130 },
-  { title: '每箱量', dataIndex: 'qtyPerBox', width: 80 },
-  { title: '图片', dataIndex: 'imageUrl', key: 'imageUrl', width: 70 },
-  { title: '单价', dataIndex: 'unitPrice', width: 80 },
-  { title: '箱价', dataIndex: 'boxPrice', width: 90 },
-  { title: '库存状态', dataIndex: 'stockStatus', width: 130 },
-];
+  { title: t('product.supplierProduct.name'), dataIndex: 'productName' },
+  { title: t('common.code'), dataIndex: 'productCode', width: 130 },
+  { title: t('product.supplierProduct.qtyPerBox'), dataIndex: 'qtyPerBox', width: 80 },
+  { title: t('product.supplierProduct.image'), dataIndex: 'imageUrl', key: 'imageUrl', width: 70 },
+  { title: t('product.supplierProduct.scrape.unitPrice'), dataIndex: 'unitPrice', width: 80 },
+  { title: t('product.supplierProduct.boxPrice'), dataIndex: 'boxPrice', width: 90 },
+  { title: t('product.supplierProduct.stockStatus'), dataIndex: 'stockStatus', width: 130 },
+]);
 
 async function onScrape() {
   if (!form.url.trim()) {
-    message.warning('请输入 URL');
+    message.warning(t('product.supplierProduct.scrape.warnUrl'));
     return;
   }
   scraping.value = true;
@@ -78,7 +81,7 @@ async function onScrape() {
   rows.value = []; // 清空旧结果，避免抓取失败时残留上一个 URL 的数据被误导入
   try {
     rows.value = await apiScrapeProducts(form.url.trim());
-    message.success(`抓取到 ${rows.value.length} 条产品`);
+    message.success(t('product.supplierProduct.scrape.scrapedCount', { n: rows.value.length }));
   } finally {
     scraping.value = false;
   }
@@ -86,15 +89,15 @@ async function onScrape() {
 
 async function onImport() {
   if (form.supplierId == null) {
-    message.warning('请选择供应商');
+    message.warning(t('product.supplierProduct.selectSupplier'));
     return;
   }
   if (form.brandId == null) {
-    message.warning('请选择品牌');
+    message.warning(t('product.supplierProduct.selectBrand'));
     return;
   }
   if (rows.value.length === 0) {
-    message.warning('请先抓取产品');
+    message.warning(t('product.supplierProduct.scrape.scrapeFirst'));
     return;
   }
   importing.value = true;
@@ -106,7 +109,12 @@ async function onImport() {
       rows: rows.value,
     });
     message.success(
-      `导入完成：新增 ${result.value.created}，更新 ${result.value.updated}，跳过 ${result.value.skipped}，失败 ${result.value.failed}`,
+      t('product.supplierProduct.importDone', {
+        created: result.value.created,
+        updated: result.value.updated,
+        skipped: result.value.skipped,
+        failed: result.value.failed,
+      }),
     );
     emit('imported');
   } finally {
@@ -122,25 +130,25 @@ defineExpose({ form, brandOptions, rows, result, onScrape, onImport });
 </script>
 
 <template>
-  <a-modal :open="open" title="从 URL 获取供应商产品" :width="900" @cancel="onClose">
+  <a-modal :open="open" :title="t('product.supplierProduct.scrape.title')" :width="900" @cancel="onClose">
     <a-form layout="vertical">
-      <a-form-item label="供应商" required>
-        <a-select v-model:value="form.supplierId" :options="supplierOptions" placeholder="选择供应商"
+      <a-form-item :label="t('product.supplierProduct.supplier')" required>
+        <a-select v-model:value="form.supplierId" :options="supplierOptions" :placeholder="t('product.supplierProduct.selectSupplier')"
           show-search option-filter-prop="label" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="品牌（仅列已授权）" required>
-        <a-select v-model:value="form.brandId" :options="brandOptions" placeholder="选择品牌" style="width: 100%" />
+      <a-form-item :label="t('product.supplierProduct.brandAuthorizedOnly')" required>
+        <a-select v-model:value="form.brandId" :options="brandOptions" :placeholder="t('product.supplierProduct.selectBrand')" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="编码已存在时">
+      <a-form-item :label="t('product.supplierProduct.onCodeExists')">
         <a-radio-group v-model:value="form.mode">
-          <a-radio-button value="skip">跳过</a-radio-button>
-          <a-radio-button value="overwrite">覆盖更新</a-radio-button>
+          <a-radio-button value="skip">{{ t('product.supplierProduct.modeSkip') }}</a-radio-button>
+          <a-radio-button value="overwrite">{{ t('product.supplierProduct.modeOverwrite') }}</a-radio-button>
         </a-radio-group>
       </a-form-item>
-      <a-form-item label="产品列表 URL" required>
+      <a-form-item :label="t('product.supplierProduct.scrape.urlLabel')" required>
         <a-space style="width: 100%">
           <a-input v-model:value="form.url" placeholder="https://morgan.dzncm.com/price81469/" style="width: 520px" />
-          <a-button type="primary" :loading="scraping" data-test="do-scrape" @click="onScrape">抓取</a-button>
+          <a-button type="primary" :loading="scraping" data-test="do-scrape" @click="onScrape">{{ t('product.supplierProduct.scrape.scrape') }}</a-button>
         </a-space>
       </a-form-item>
     </a-form>
@@ -157,26 +165,26 @@ defineExpose({ form, brandOptions, rows, result, onScrape, onImport });
 
     <div v-if="result" class="mt-2">
       <a-descriptions size="small" :column="4" bordered>
-        <a-descriptions-item label="总行数">{{ result.total }}</a-descriptions-item>
-        <a-descriptions-item label="新增">{{ result.created }}</a-descriptions-item>
-        <a-descriptions-item label="更新">{{ result.updated }}</a-descriptions-item>
-        <a-descriptions-item label="跳过">{{ result.skipped }}</a-descriptions-item>
-        <a-descriptions-item label="失败">{{ result.failed }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.totalRows')">{{ result.total }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.created')">{{ result.created }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.updated')">{{ result.updated }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.skipped')">{{ result.skipped }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.failed')">{{ result.failed }}</a-descriptions-item>
       </a-descriptions>
       <a-table v-if="result.errors.length" class="mt-2" size="small" :pagination="false"
         :data-source="result.errors"
         :columns="[
-          { title: '行号', dataIndex: 'row', width: 80 },
-          { title: '产品编码', dataIndex: 'productCode', width: 160 },
-          { title: '原因', dataIndex: 'reason' },
+          { title: t('product.supplierProduct.rowNo'), dataIndex: 'row', width: 80 },
+          { title: t('product.supplierProduct.productCode'), dataIndex: 'productCode', width: 160 },
+          { title: t('product.supplierProduct.reason'), dataIndex: 'reason' },
         ]" row-key="row" />
     </div>
 
     <template #footer>
       <a-space>
-        <a-button @click="onClose">关闭</a-button>
+        <a-button @click="onClose">{{ t('product.supplierProduct.close') }}</a-button>
         <a-button type="primary" :loading="importing" :disabled="rows.length === 0" data-test="do-import-scraped"
-          @click="onImport">确认导入</a-button>
+          @click="onImport">{{ t('product.supplierProduct.scrape.confirmImport') }}</a-button>
       </a-space>
     </template>
   </a-modal>

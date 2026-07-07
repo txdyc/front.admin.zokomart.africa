@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { UploadProps } from 'ant-design-vue';
 import type { SelectOption } from '@/components/SchemaForm.vue';
@@ -18,6 +19,9 @@ const emit = defineEmits<{
   (e: 'imported'): void;
 }>();
 
+const { t } = useI18n();
+
+// CSV 模板表头/示例行是与后端解析约定的数据契约（后端按中文表头名解析），不作 UI 翻译。
 const TEMPLATE_HEADERS = ['产品名称', '产品编码', '分类路径', '批发价', '零售价', '最小采购量', '图片URL', '备注'];
 
 const form = reactive<{ supplierId?: Id; brandId?: Id; mode: ImportMode }>({ mode: 'skip' });
@@ -33,7 +37,7 @@ async function loadBrands(supplierId?: Id) {
   const list = await apiAuthorizedBrands(supplierId);
   brandOptions.value = list.map((b) => ({ label: b.brandName ?? String(b.brandId), value: b.brandId }));
   if (brandOptions.value.length === 0) {
-    message.warning('该供应商暂无已授权品牌，请先在供应商管理里授权');
+    message.warning(t('product.supplierProduct.noAuthorizedBrandsHint'));
   }
 }
 
@@ -53,7 +57,7 @@ watch(() => form.supplierId, (v) => loadBrands(v));
 
 const beforeUpload: UploadProps['beforeUpload'] = (f) => {
   const ok = f.name.toLowerCase().endsWith('.csv');
-  if (!ok) message.error('只能上传 .csv 文件');
+  if (!ok) message.error(t('product.supplierProduct.import.csvOnly'));
   else file.value = f as unknown as File;
   return false; // 阻止自动上传，仅暂存
 };
@@ -71,15 +75,15 @@ function downloadTemplate() {
 
 async function onSubmit() {
   if (form.supplierId == null) {
-    message.warning('请选择供应商');
+    message.warning(t('product.supplierProduct.selectSupplier'));
     return;
   }
   if (form.brandId == null) {
-    message.warning('请选择品牌');
+    message.warning(t('product.supplierProduct.selectBrand'));
     return;
   }
   if (!file.value) {
-    message.warning('请选择 CSV 文件');
+    message.warning(t('product.supplierProduct.import.selectCsv'));
     return;
   }
   const fd = new FormData();
@@ -90,7 +94,12 @@ async function onSubmit() {
   submitting.value = true;
   try {
     result.value = await apiSupplierProductImport(fd);
-    message.success(`导入完成：新增 ${result.value.created}，更新 ${result.value.updated}，跳过 ${result.value.skipped}，失败 ${result.value.failed}`);
+    message.success(t('product.supplierProduct.importDone', {
+      created: result.value.created,
+      updated: result.value.updated,
+      skipped: result.value.skipped,
+      failed: result.value.failed,
+    }));
     emit('imported');
   } finally {
     submitting.value = false;
@@ -105,52 +114,52 @@ defineExpose({ form, brandOptions, beforeUpload, downloadTemplate, onSubmit, res
 </script>
 
 <template>
-  <a-modal :open="open" title="导入供应商产品" :width="720" :confirm-loading="submitting" @cancel="onClose">
+  <a-modal :open="open" :title="t('product.supplierProduct.import.title')" :width="720" :confirm-loading="submitting" @cancel="onClose">
     <a-form layout="vertical">
-      <a-form-item label="供应商" required>
-        <a-select v-model:value="form.supplierId" :options="supplierOptions" placeholder="选择供应商" show-search
+      <a-form-item :label="t('product.supplierProduct.supplier')" required>
+        <a-select v-model:value="form.supplierId" :options="supplierOptions" :placeholder="t('product.supplierProduct.selectSupplier')" show-search
           option-filter-prop="label" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="品牌（仅列已授权）" required>
-        <a-select v-model:value="form.brandId" :options="brandOptions" placeholder="选择品牌" style="width: 100%" />
+      <a-form-item :label="t('product.supplierProduct.brandAuthorizedOnly')" required>
+        <a-select v-model:value="form.brandId" :options="brandOptions" :placeholder="t('product.supplierProduct.selectBrand')" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="编码已存在时">
+      <a-form-item :label="t('product.supplierProduct.onCodeExists')">
         <a-radio-group v-model:value="form.mode">
-          <a-radio-button value="skip">跳过</a-radio-button>
-          <a-radio-button value="overwrite">覆盖更新</a-radio-button>
+          <a-radio-button value="skip">{{ t('product.supplierProduct.modeSkip') }}</a-radio-button>
+          <a-radio-button value="overwrite">{{ t('product.supplierProduct.modeOverwrite') }}</a-radio-button>
         </a-radio-group>
       </a-form-item>
-      <a-form-item label="CSV 文件">
+      <a-form-item :label="t('product.supplierProduct.import.csvFile')">
         <a-space direction="vertical" style="width: 100%">
           <a-upload :before-upload="beforeUpload" :max-count="1" accept=".csv" :show-upload-list="true">
-            <a-button data-test="pick-csv">选择 CSV 文件</a-button>
+            <a-button data-test="pick-csv">{{ t('product.supplierProduct.import.pickCsv') }}</a-button>
           </a-upload>
-          <a @click="downloadTemplate">下载模板</a>
+          <a @click="downloadTemplate">{{ t('product.supplierProduct.import.downloadTemplate') }}</a>
         </a-space>
       </a-form-item>
     </a-form>
 
     <div v-if="result" class="mt-2">
       <a-descriptions size="small" :column="4" bordered>
-        <a-descriptions-item label="总行数">{{ result.total }}</a-descriptions-item>
-        <a-descriptions-item label="新增">{{ result.created }}</a-descriptions-item>
-        <a-descriptions-item label="更新">{{ result.updated }}</a-descriptions-item>
-        <a-descriptions-item label="跳过">{{ result.skipped }}</a-descriptions-item>
-        <a-descriptions-item label="失败">{{ result.failed }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.totalRows')">{{ result.total }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.created')">{{ result.created }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.updated')">{{ result.updated }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.skipped')">{{ result.skipped }}</a-descriptions-item>
+        <a-descriptions-item :label="t('product.supplierProduct.failed')">{{ result.failed }}</a-descriptions-item>
       </a-descriptions>
       <a-table v-if="result.errors.length" class="mt-2" size="small" :pagination="false"
         :data-source="result.errors"
         :columns="[
-          { title: '行号', dataIndex: 'row', width: 80 },
-          { title: '产品编码', dataIndex: 'productCode', width: 160 },
-          { title: '原因', dataIndex: 'reason' },
+          { title: t('product.supplierProduct.rowNo'), dataIndex: 'row', width: 80 },
+          { title: t('product.supplierProduct.productCode'), dataIndex: 'productCode', width: 160 },
+          { title: t('product.supplierProduct.reason'), dataIndex: 'reason' },
         ]" row-key="row" />
     </div>
 
     <template #footer>
       <a-space>
-        <a-button @click="onClose">关闭</a-button>
-        <a-button type="primary" :loading="submitting" data-test="do-import" @click="onSubmit">开始导入</a-button>
+        <a-button @click="onClose">{{ t('product.supplierProduct.close') }}</a-button>
+        <a-button type="primary" :loading="submitting" data-test="do-import" @click="onSubmit">{{ t('product.supplierProduct.import.startImport') }}</a-button>
       </a-space>
     </template>
   </a-modal>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -11,8 +12,15 @@ import type { ProductSpuVO, ProductSpuSaveDTO } from '@/types/product';
 import type { CategoryVO } from '@/types/basedata';
 import type { Id } from '@/types/api';
 
+const { t } = useI18n();
+
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
+
+const statusOptions = computed(() => [
+  { label: t('product.spu.onSale'), value: 1 },
+  { label: t('product.spu.offSale'), value: 0 },
+]);
 
 // 品牌、分类下拉数据源（建/编 与 表格名称回显共用）
 const brandOptions = ref<SelectOption[]>([]);
@@ -52,22 +60,22 @@ const onReset = () => {
   query.value = {};
 };
 
-const columns: TableColumnsType = [
-  { title: '主图', dataIndex: 'mainImage', key: 'mainImage', width: 80 },
-  { title: 'SPU 名称', dataIndex: 'name', key: 'name' },
-  { title: '品牌', dataIndex: 'brandId', key: 'brandId', width: 140 },
-  { title: '分类', dataIndex: 'categoryId', key: 'categoryId', width: 160 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
-  { title: '操作', key: 'action', width: 160 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('product.spu.mainImage'), dataIndex: 'mainImage', key: 'mainImage', width: 80 },
+  { title: t('product.spu.spuName'), dataIndex: 'name', key: 'name' },
+  { title: t('product.spu.brand'), dataIndex: 'brandId', key: 'brandId', width: 140 },
+  { title: t('product.spu.category'), dataIndex: 'categoryId', key: 'categoryId', width: 160 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 90 },
+  { title: t('common.operation'), key: 'action', width: 160 },
+]);
 
 const formSchema = computed<FormField[]>(() => [
-  { field: 'name', label: 'SPU 名称', component: 'input', rules: [{ required: true, message: '请输入 SPU 名称' }] },
-  { field: 'brandId', label: '品牌', component: 'select', options: brandOptions.value, placeholder: '请选择品牌' },
-  { field: 'categoryId', label: '分类', component: 'select', options: categoryOptions.value, placeholder: '请选择分类' },
-  { field: 'mainImage', label: '主图地址', component: 'input', placeholder: '图片 URL' },
-  { field: 'description', label: '描述', component: 'textarea' },
-  { field: 'status', label: '上架', component: 'switch' },
+  { field: 'name', label: t('product.spu.spuName'), component: 'input', rules: [{ required: true, message: t('product.spu.inputName') }] },
+  { field: 'brandId', label: t('product.spu.brand'), component: 'select', options: brandOptions.value, placeholder: t('product.spu.selectBrand') },
+  { field: 'categoryId', label: t('product.spu.category'), component: 'select', options: categoryOptions.value, placeholder: t('product.spu.selectCategory') },
+  { field: 'mainImage', label: t('product.spu.mainImageUrl'), component: 'input', placeholder: t('product.spu.imageUrlPlaceholder') },
+  { field: 'description', label: t('product.spu.description'), component: 'textarea' },
+  { field: 'status', label: t('product.spu.onSale'), component: 'switch' },
 ]);
 
 const modalOpen = ref(false);
@@ -100,7 +108,7 @@ async function onSubmit() {
   try {
     if (editingId.value) await apiSpuUpdate(editingId.value, payload);
     else await apiSpuCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -110,7 +118,7 @@ async function onSubmit() {
 
 async function onDelete(row: ProductSpuVO) {
   await apiSpuDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 
@@ -121,30 +129,27 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="关键字">
+        <a-form-item :label="t('common.keyword')">
           <a-input
             v-model:value="searchForm.keyword"
-            placeholder="SPU 名称"
+            :placeholder="t('product.spu.spuNamePlaceholder')"
             allow-clear
             @press-enter="onSearch"
           />
         </a-form-item>
-        <a-form-item label="状态">
+        <a-form-item :label="t('common.status')">
           <a-select
             v-model:value="searchForm.status"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             allow-clear
             style="width: 120px"
-            :options="[
-              { label: '上架', value: 1 },
-              { label: '下架', value: 0 },
-            ]"
+            :options="statusOptions"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -153,7 +158,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
     <a-card :bordered="false">
       <div class="mb-3">
         <a-button v-perm="'product:spu:create'" type="primary" data-test="spu-create" @click="openCreate">
-          新增 SPU
+          {{ t('product.spu.create') }}
         </a-button>
       </div>
 
@@ -171,14 +176,14 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
           </template>
           <template v-else-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '上架' : '下架' }}
+              {{ record.status === 1 ? t('product.spu.onSale') : t('product.spu.offSale') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'product:spu:update'" @click="openEdit(record as ProductSpuVO)">编辑</a>
-              <a-popconfirm title="确认删除该 SPU？" @confirm="onDelete(record as ProductSpuVO)">
-                <a v-perm="'product:spu:delete'" class="text-red-500">删除</a>
+              <a v-perm="'product:spu:update'" @click="openEdit(record as ProductSpuVO)">{{ t('common.edit') }}</a>
+              <a-popconfirm :title="t('product.spu.deleteConfirm')" @confirm="onDelete(record as ProductSpuVO)">
+                <a v-perm="'product:spu:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -188,7 +193,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑 SPU' : '新增 SPU'"
+      :title="editingId ? t('product.spu.edit') : t('product.spu.create')"
       :confirm-loading="submitting"
       destroy-on-close
       @ok="onSubmit"
