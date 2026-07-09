@@ -486,6 +486,7 @@ export default {
     keywordPlaceholder: 'Customer Name / Telephone',
     importBtn: 'Import CSV',
     importTitle: 'Import Raw Orders',
+    editTitle: 'Edit Raw Order',
     pickCsv: 'Choose CSV file',
     csvOnly: 'Only .csv files are supported',
     selectCsv: 'Please choose a CSV file',

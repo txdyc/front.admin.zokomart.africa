@@ -486,6 +486,7 @@ export default {
     keywordPlaceholder: '客户姓名 / 电话',
     importBtn: '导入 CSV',
     importTitle: '导入原始订单',
+    editTitle: '编辑原始订单',
     pickCsv: '选择 CSV 文件',
     csvOnly: '仅支持 .csv 文件',
     selectCsv: '请先选择 CSV 文件',

@@ -47,3 +47,20 @@ export interface RawOrderImportResult {
   failed: number;
   errors: RawOrderImportError[];
 }
+
+export interface RawOrderUpdateDTO {
+  orderDate: string;
+  brand: string;
+  price: number;
+  customerName: string;
+  city: string;
+  address: string;
+  telephone: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  status: RawOrderStatus;
+  cod: number;
+  freight: number;
+  balance: number;
+}
