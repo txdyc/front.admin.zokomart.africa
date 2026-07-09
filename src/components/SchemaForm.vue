@@ -9,7 +9,7 @@ export interface SelectOption {
 export interface FormField {
   field: string;
   label: string;
-  component: 'input' | 'password' | 'textarea' | 'number' | 'select' | 'switch' | 'imageUpload';
+  component: 'input' | 'password' | 'textarea' | 'number' | 'select' | 'switch' | 'imageUpload' | 'date';
   rules?: Rule[];
   options?: SelectOption[];
   placeholder?: string;
@@ -103,6 +103,13 @@ defineExpose({ validate, getValues });
         :options="f.options"
         :placeholder="f.placeholder"
         allow-clear
+        v-bind="f.props"
+      />
+      <a-date-picker
+        v-else-if="f.component === 'date'"
+        v-model:value="model[f.field]"
+        value-format="YYYY-MM-DD"
+        class="w-full"
         v-bind="f.props"
       />
       <a-switch
