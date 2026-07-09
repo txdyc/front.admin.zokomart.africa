@@ -4,6 +4,13 @@ import { setActivePinia, createPinia } from 'pinia';
 import RawOrderImportModal from '@/views/order/raw/RawOrderImportModal.vue';
 import type { RawOrderImportResult } from '@/types/order';
 
+// jsdom 未实现 URL.createObjectURL，下载模板用例需打桩。
+vi.stubGlobal('URL', {
+  ...(globalThis.URL as any),
+  createObjectURL: vi.fn(() => 'blob:mock'),
+  revokeObjectURL: vi.fn(),
+});
+
 const importRes: RawOrderImportResult = {
   total: 7, success: 2, failed: 5,
   errors: [
