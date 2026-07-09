@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
@@ -12,16 +13,18 @@ import {
 import type { CategoryVO, CategorySaveDTO } from '@/types/basedata';
 import type { Id } from '@/types/api';
 
+const { t } = useI18n();
+
 const formRef = ref<InstanceType<typeof SchemaForm>>();
 const loading = ref(false);
 const tree = ref<CategoryVO[]>([]);
 
-const columns: TableColumnsType = [
-  { title: '分类名', dataIndex: 'name', key: 'name' },
-  { title: '排序', dataIndex: 'sort', key: 'sort', width: 100 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '操作', key: 'action', width: 220 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('basedata.category.name'), dataIndex: 'name', key: 'name' },
+  { title: t('common.sort'), dataIndex: 'sort', key: 'sort', width: 100 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('common.operation'), key: 'action', width: 220 },
+]);
 
 async function loadTree() {
   loading.value = true;
@@ -34,7 +37,7 @@ async function loadTree() {
 onMounted(loadTree);
 
 const parentOptions = computed<SelectOption[]>(() => {
-  const opts: SelectOption[] = [{ label: '顶级分类', value: 0 }];
+  const opts: SelectOption[] = [{ label: t('basedata.category.rootCategory'), value: 0 }];
   const walk = (nodes: CategoryVO[], depth: number) => {
     nodes.forEach((n) => {
       opts.push({ label: `${'　'.repeat(depth)}${n.name}`, value: n.id });
@@ -46,10 +49,10 @@ const parentOptions = computed<SelectOption[]>(() => {
 });
 
 const formSchema = computed<FormField[]>(() => [
-  { field: 'parentId', label: '上级分类', component: 'select', options: parentOptions.value },
-  { field: 'name', label: '分类名', component: 'input', rules: [{ required: true, message: '请输入分类名' }] },
-  { field: 'sort', label: '排序', component: 'number' },
-  { field: 'status', label: '启用', component: 'switch' },
+  { field: 'parentId', label: t('basedata.category.parent'), component: 'select', options: parentOptions.value },
+  { field: 'name', label: t('basedata.category.name'), component: 'input', rules: [{ required: true, message: t('basedata.category.inputName') }] },
+  { field: 'sort', label: t('common.sort'), component: 'number' },
+  { field: 'status', label: t('common.enabled'), component: 'switch' },
 ]);
 
 const modalOpen = ref(false);
@@ -75,7 +78,7 @@ async function onSubmit() {
   try {
     if (editingId.value) await apiCategoryUpdate(editingId.value, payload);
     else await apiCategoryCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     await loadTree();
   } finally {
@@ -86,7 +89,7 @@ async function onSubmit() {
 async function onDelete(row: CategoryVO) {
   // 后端会校验子节点/被引用，失败时由 request 拦截器按 msg 提示
   await apiCategoryDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   await loadTree();
 }
 
@@ -97,7 +100,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
   <a-card :bordered="false">
     <div class="mb-3">
       <a-button v-perm="'category:create'" type="primary" data-test="category-create" @click="openCreate(0)">
-        新增分类
+        {{ t('basedata.category.createCategory') }}
       </a-button>
     </div>
 
@@ -112,15 +115,15 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
           <a-tag :color="record.status === 1 ? 'green' : 'red'">
-            {{ record.status === 1 ? '启用' : '停用' }}
+            {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
           </a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space>
-            <a v-perm="'category:create'" @click="openCreate(record.id)">新增子项</a>
-            <a v-perm="'category:update'" @click="openEdit(record as CategoryVO)">编辑</a>
-            <a-popconfirm title="确认删除该分类？（含子节点或被引用将被后端拒绝）" @confirm="onDelete(record as CategoryVO)">
-              <a v-perm="'category:delete'" class="text-red-500">删除</a>
+            <a v-perm="'category:create'" @click="openCreate(record.id)">{{ t('basedata.category.addChild') }}</a>
+            <a v-perm="'category:update'" @click="openEdit(record as CategoryVO)">{{ t('common.edit') }}</a>
+            <a-popconfirm :title="t('basedata.category.deleteConfirm')" @confirm="onDelete(record as CategoryVO)">
+              <a v-perm="'category:delete'" class="text-red-500">{{ t('common.delete') }}</a>
             </a-popconfirm>
           </a-space>
         </template>
@@ -129,7 +132,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑分类' : '新增分类'"
+      :title="editingId ? t('basedata.category.editCategory') : t('basedata.category.createCategory')"
       :confirm-loading="submitting"
       destroy-on-close
       @ok="onSubmit"

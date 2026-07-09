@@ -13,3 +13,5 @@ coverage/
 # 本地环境覆盖
 .env.local
 .env.*.local
+# 自动生成的类型声明（unplugin-vue-components）
+src/types/components.d.ts

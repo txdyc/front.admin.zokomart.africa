@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -22,13 +23,14 @@ import type { SelectOption } from '@/components/SchemaForm.vue';
 import type { Id } from '@/types/api';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
+const { t } = useI18n();
 
-const STATUS_LABEL: Record<PlanStatus, string> = {
-  DRAFT: '草稿',
-  PENDING: '待审批',
-  APPROVED: '已通过',
-  REJECTED: '已退回',
-};
+const STATUS_LABEL = computed<Record<PlanStatus, string>>(() => ({
+  DRAFT: t('purchase.plan.statusDraft'),
+  PENDING: t('purchase.plan.statusPending'),
+  APPROVED: t('purchase.plan.statusApproved'),
+  REJECTED: t('purchase.plan.statusRejected'),
+}));
 const STATUS_COLOR: Record<PlanStatus, string> = {
   DRAFT: 'default',
   PENDING: 'orange',
@@ -56,14 +58,21 @@ const onReset = () => {
   query.value = {};
 };
 
-const listColumns: TableColumnsType = [
-  { title: '计划单号', dataIndex: 'planNo', key: 'planNo' },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '总数量', dataIndex: 'totalQty', key: 'totalQty', width: 90 },
-  { title: '总金额 (GHS)', dataIndex: 'totalAmount', key: 'totalAmount', width: 130 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: '操作', key: 'action', width: 240 },
-];
+const listColumns = computed<TableColumnsType>(() => [
+  { title: t('purchase.plan.planNo'), dataIndex: 'planNo', key: 'planNo' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 100 },
+  { title: t('common.totalQty'), dataIndex: 'totalQty', key: 'totalQty', width: 90 },
+  { title: t('purchase.plan.totalAmountGhs'), dataIndex: 'totalAmount', key: 'totalAmount', width: 130 },
+  { title: t('common.createTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
+  { title: t('common.operation'), key: 'action', width: 240 },
+]);
+
+const statusOptions = computed(() => [
+  { label: t('purchase.plan.statusDraft'), value: 'DRAFT' },
+  { label: t('purchase.plan.statusPending'), value: 'PENDING' },
+  { label: t('purchase.plan.statusApproved'), value: 'APPROVED' },
+  { label: t('purchase.plan.statusRejected'), value: 'REJECTED' },
+]);
 
 // ---------------- 编辑抽屉：草稿购物车 ----------------
 interface DraftRow {
@@ -94,13 +103,13 @@ const productFilter = ref<SupplierProductQuery>({});
 const productQuery = ref<Record<string, any>>({});
 const onProductFilterChange = (v: SupplierProductQuery) => (productQuery.value = { ...v });
 
-const productColumns: TableColumnsType = [
-  { title: '名称', dataIndex: 'name', key: 'name' },
-  { title: '编码', dataIndex: 'productCode', key: 'productCode', width: 120 },
+const productColumns = computed<TableColumnsType>(() => [
+  { title: t('common.name'), dataIndex: 'name', key: 'name' },
+  { title: t('common.code'), dataIndex: 'productCode', key: 'productCode', width: 120 },
   { title: 'MOQ', dataIndex: 'minPurchaseQty', key: 'minPurchaseQty', width: 70 },
-  { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
-  { title: '采购数量', key: 'qty', width: 140 },
-];
+  { title: t('common.wholesalePrice'), dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
+  { title: t('purchase.plan.purchaseQty'), key: 'qty', width: 140 },
+]);
 
 function getQty(productId: Id): number {
   return draft[String(productId)]?.purchaseQty ?? 0;
@@ -189,18 +198,18 @@ function buildPayload(): PurchasePlanSaveDTO {
 
 async function save() {
   if (selectedRows.value.length === 0) {
-    message.warning('请至少录入一条采购明细（数量 > 0）');
+    message.warning(t('purchase.plan.atLeastOneItem'));
     return;
   }
   if (hasInvalid.value) {
-    message.warning('存在采购数量小于 MOQ 的明细，请修正');
+    message.warning(t('purchase.plan.belowMoqExists'));
     return;
   }
   submitting.value = true;
   try {
     if (editingId.value) await apiPlanUpdate(editingId.value, buildPayload());
     else await apiPlanCreate(buildPayload());
-    message.success('已保存草稿');
+    message.success(t('purchase.plan.savedDraft'));
     drawerOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -211,17 +220,17 @@ async function save() {
 // ---------------- 列表行操作 ----------------
 async function submitPlan(row: PurchasePlanVO) {
   await apiPlanSubmit(row.id);
-  message.success('已提交审批');
+  message.success(t('purchase.plan.submitted'));
   tableRef.value?.reload();
 }
 async function deletePlan(row: PurchasePlanVO) {
   await apiPlanDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 async function approve(row: PurchasePlanVO) {
   await apiPlanApprove(row.id);
-  message.success('已通过，已按供应商生成采购订单');
+  message.success(t('purchase.plan.approvedGenerated'));
   tableRef.value?.reload();
 }
 
@@ -236,11 +245,11 @@ function openReject(row: PurchasePlanVO) {
 }
 async function doReject() {
   if (!rejectReason.value.trim()) {
-    message.warning('请填写退回原因');
+    message.warning(t('purchase.plan.fillRejectReason'));
     return;
   }
   await apiPlanReject(rejectTarget.value!.id, rejectReason.value.trim());
-  message.success('已退回');
+  message.success(t('purchase.plan.rejected'));
   rejectOpen.value = false;
   tableRef.value?.reload();
 }
@@ -255,24 +264,19 @@ defineExpose({
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="状态">
+        <a-form-item :label="t('common.status')">
           <a-select
             v-model:value="searchForm.status"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             allow-clear
             style="width: 130px"
-            :options="[
-              { label: '草稿', value: 'DRAFT' },
-              { label: '待审批', value: 'PENDING' },
-              { label: '已通过', value: 'APPROVED' },
-              { label: '已退回', value: 'REJECTED' },
-            ]"
+            :options="statusOptions"
           />
         </a-form-item>
-        <a-form-item label="供应商">
+        <a-form-item :label="t('common.supplier')">
           <a-select
             v-model:value="searchForm.supplierId"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             show-search
             option-filter-prop="label"
             allow-clear
@@ -283,8 +287,8 @@ defineExpose({
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" data-test="plan-search" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" data-test="plan-search" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -293,7 +297,7 @@ defineExpose({
     <a-card :bordered="false">
       <div class="mb-3">
         <a-button v-perm="'purchase:plan:create'" type="primary" data-test="plan-create" @click="openCreate">
-          新增采购计划
+          {{ t('purchase.plan.createPlan') }}
         </a-button>
       </div>
 
@@ -309,21 +313,21 @@ defineExpose({
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a @click="openView(record as PurchasePlanVO)">查看</a>
+              <a @click="openView(record as PurchasePlanVO)">{{ t('purchase.plan.view') }}</a>
               <template v-if="isEditable((record as PurchasePlanVO).status)">
-                <a v-perm="'purchase:plan:update'" @click="openEdit(record as PurchasePlanVO)">编辑</a>
-                <a-popconfirm title="确认提交审批？" @confirm="submitPlan(record as PurchasePlanVO)">
-                  <a v-perm="'purchase:plan:submit'">提交</a>
+                <a v-perm="'purchase:plan:update'" @click="openEdit(record as PurchasePlanVO)">{{ t('common.edit') }}</a>
+                <a-popconfirm :title="t('purchase.plan.confirmSubmit')" @confirm="submitPlan(record as PurchasePlanVO)">
+                  <a v-perm="'purchase:plan:submit'">{{ t('purchase.plan.submit') }}</a>
                 </a-popconfirm>
-                <a-popconfirm title="确认删除该计划？" @confirm="deletePlan(record as PurchasePlanVO)">
-                  <a v-perm="'purchase:plan:delete'" class="text-red-500">删除</a>
+                <a-popconfirm :title="t('purchase.plan.confirmDelete')" @confirm="deletePlan(record as PurchasePlanVO)">
+                  <a v-perm="'purchase:plan:delete'" class="text-red-500">{{ t('common.delete') }}</a>
                 </a-popconfirm>
               </template>
               <template v-else-if="(record as PurchasePlanVO).status === 'PENDING'">
-                <a-popconfirm title="确认通过该计划？" @confirm="approve(record as PurchasePlanVO)">
-                  <a v-perm="'purchase:plan:approve'" class="text-green-600">通过</a>
+                <a-popconfirm :title="t('purchase.plan.confirmApprove')" @confirm="approve(record as PurchasePlanVO)">
+                  <a v-perm="'purchase:plan:approve'" class="text-green-600">{{ t('purchase.plan.approve') }}</a>
                 </a-popconfirm>
-                <a v-perm="'purchase:plan:approve'" class="text-red-500" @click="openReject(record as PurchasePlanVO)">退回</a>
+                <a v-perm="'purchase:plan:approve'" class="text-red-500" @click="openReject(record as PurchasePlanVO)">{{ t('purchase.plan.reject') }}</a>
               </template>
             </a-space>
           </template>
@@ -334,7 +338,7 @@ defineExpose({
     <!-- 编辑 / 查看抽屉 -->
     <a-drawer
       v-model:open="drawerOpen"
-      :title="mode === 'create' ? '新增采购计划' : mode === 'edit' ? '编辑采购计划' : '查看采购计划'"
+      :title="mode === 'create' ? t('purchase.plan.createTitle') : mode === 'edit' ? t('purchase.plan.editTitle') : t('purchase.plan.viewTitle')"
       width="920"
       destroy-on-close
     >
@@ -343,21 +347,21 @@ defineExpose({
         type="warning"
         show-icon
         class="mb-3"
-        :message="`退回原因：${approveRemark}`"
+        :message="t('purchase.plan.rejectReasonPrefix', { reason: approveRemark })"
       />
 
       <div v-if="viewMeta && mode === 'view'" class="mb-3">
         <a-descriptions size="small" :column="2" bordered>
-          <a-descriptions-item label="计划单号">{{ viewMeta.planNo }}</a-descriptions-item>
-          <a-descriptions-item label="状态">{{ STATUS_LABEL[viewMeta.status] }}</a-descriptions-item>
-          <a-descriptions-item label="总数量">{{ viewMeta.totalQty ?? 0 }}</a-descriptions-item>
-          <a-descriptions-item label="总金额 (GHS)">{{ money(viewMeta.totalAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.plan.planNo')">{{ viewMeta.planNo }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.status')">{{ STATUS_LABEL[viewMeta.status] }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.totalQty')">{{ viewMeta.totalQty ?? 0 }}</a-descriptions-item>
+          <a-descriptions-item :label="t('purchase.plan.totalAmountGhs')">{{ money(viewMeta.totalAmount) }}</a-descriptions-item>
         </a-descriptions>
       </div>
 
       <!-- 编辑态：联动筛选 + 产品选择器 -->
       <template v-if="mode !== 'view'">
-        <a-card size="small" title="选择供应商产品" class="mb-3">
+        <a-card size="small" :title="t('purchase.plan.selectSupplierProduct')" class="mb-3">
           <CascadeFilter v-model="productFilter" @change="onProductFilterChange" />
           <BasicTable
             :columns="productColumns"
@@ -382,15 +386,15 @@ defineExpose({
       </template>
 
       <!-- 已选明细 -->
-      <a-card size="small" :title="`已选明细（${selectedRows.length} 项）`">
+      <a-card size="small" :title="t('purchase.plan.selectedItems', { n: selectedRows.length })">
         <a-table
           :columns="[
-            { title: '名称', dataIndex: 'productName', key: 'productName' },
-            { title: '编码', dataIndex: 'productCode', key: 'productCode', width: 120 },
+            { title: t('common.name'), dataIndex: 'productName', key: 'productName' },
+            { title: t('common.code'), dataIndex: 'productCode', key: 'productCode', width: 120 },
             { title: 'MOQ', dataIndex: 'minPurchaseQty', key: 'minPurchaseQty', width: 70 },
-            { title: '批发价', dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
-            { title: '数量', dataIndex: 'purchaseQty', key: 'purchaseQty', width: 80 },
-            { title: '小计', key: 'subtotal', width: 110 },
+            { title: t('common.wholesalePrice'), dataIndex: 'wholesalePrice', key: 'wholesalePrice', width: 90 },
+            { title: t('common.quantity'), dataIndex: 'purchaseQty', key: 'purchaseQty', width: 80 },
+            { title: t('common.subtotal'), key: 'subtotal', width: 110 },
           ]"
           :data-source="selectedRows"
           :pagination="false"
@@ -402,7 +406,7 @@ defineExpose({
             <template v-else-if="column.key === 'purchaseQty'">
               <span :class="{ 'text-red-500': rowInvalid(record as DraftRow) }">
                 {{ record.purchaseQty }}
-                <a-tooltip v-if="rowInvalid(record as DraftRow)" title="数量小于 MOQ">⚠</a-tooltip>
+                <a-tooltip v-if="rowInvalid(record as DraftRow)" :title="t('purchase.plan.qtyBelowMoq')">⚠</a-tooltip>
               </span>
             </template>
             <template v-else-if="column.key === 'subtotal'">
@@ -412,29 +416,29 @@ defineExpose({
         </a-table>
 
         <div class="mt-3 flex justify-end gap-6">
-          <span>总数量：<b>{{ totalQty }}</b></span>
-          <span>总金额：<b>GHS {{ money(totalAmount) }}</b></span>
+          <span>{{ t('purchase.plan.totalQtyColon') }}<b>{{ totalQty }}</b></span>
+          <span>{{ t('purchase.plan.totalAmountColon') }}<b>GHS {{ money(totalAmount) }}</b></span>
         </div>
       </a-card>
 
       <div v-if="mode !== 'view'" class="mt-3">
-        <a-textarea v-model:value="remark" placeholder="备注（可选）" :rows="2" />
+        <a-textarea v-model:value="remark" :placeholder="t('purchase.plan.remarkOptional')" :rows="2" />
       </div>
 
       <template #footer>
         <a-space v-if="mode !== 'view'">
-          <a-button @click="drawerOpen = false">取消</a-button>
+          <a-button @click="drawerOpen = false">{{ t('common.cancel') }}</a-button>
           <a-button type="primary" :loading="submitting" :disabled="!canSave" data-test="plan-save" @click="save">
-            保存草稿
+            {{ t('purchase.plan.saveDraft') }}
           </a-button>
         </a-space>
-        <a-button v-else @click="drawerOpen = false">关闭</a-button>
+        <a-button v-else @click="drawerOpen = false">{{ t('common.close') }}</a-button>
       </template>
     </a-drawer>
 
     <!-- 退回原因 -->
-    <a-modal v-model:open="rejectOpen" title="退回采购计划" @ok="doReject">
-      <a-textarea v-model:value="rejectReason" placeholder="请填写退回原因" :rows="3" />
+    <a-modal v-model:open="rejectOpen" :title="t('purchase.plan.rejectTitle')" @ok="doReject">
+      <a-textarea v-model:value="rejectReason" :placeholder="t('purchase.plan.rejectPlaceholder')" :rows="3" />
     </a-modal>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import SchemaForm, { type FormField, type SelectOption } from '@/components/SchemaForm.vue';
@@ -7,6 +8,8 @@ import { apiSpuPage, apiSpuSkus } from '@/api/product/spu';
 import { apiSkuCreate, apiSkuUpdate, apiSkuDelete } from '@/api/product/sku';
 import type { ProductSkuVO, ProductSkuSaveDTO } from '@/types/product';
 import type { Id } from '@/types/api';
+
+const { t } = useI18n();
 
 const formRef = ref<InstanceType<typeof SchemaForm>>();
 
@@ -38,21 +41,21 @@ function onSpuChange() {
   loadSkus();
 }
 
-const columns: TableColumnsType = [
-  { title: '图片', dataIndex: 'image', key: 'image', width: 80 },
-  { title: 'SKU 编码', dataIndex: 'skuCode', key: 'skuCode' },
-  { title: '规格', dataIndex: 'spec', key: 'spec' },
-  { title: '售价 (GHS)', dataIndex: 'price', key: 'price', width: 120 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
-  { title: '操作', key: 'action', width: 160 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('product.sku.image'), dataIndex: 'image', key: 'image', width: 80 },
+  { title: t('product.sku.skuCode'), dataIndex: 'skuCode', key: 'skuCode' },
+  { title: t('product.sku.spec'), dataIndex: 'spec', key: 'spec' },
+  { title: t('product.sku.price'), dataIndex: 'price', key: 'price', width: 120 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 90 },
+  { title: t('common.operation'), key: 'action', width: 160 },
+]);
 
 const formSchema = computed<FormField[]>(() => [
-  { field: 'skuCode', label: 'SKU 编码', component: 'input', rules: [{ required: true, message: '请输入 SKU 编码' }] },
-  { field: 'spec', label: '规格', component: 'input', placeholder: '如 红色 / XL' },
-  { field: 'image', label: '图片地址', component: 'input', placeholder: '图片 URL' },
-  { field: 'price', label: '售价 (GHS)', component: 'number', props: { min: 0, precision: 2 } },
-  { field: 'status', label: '上架', component: 'switch' },
+  { field: 'skuCode', label: t('product.sku.skuCode'), component: 'input', rules: [{ required: true, message: t('product.sku.inputSkuCode') }] },
+  { field: 'spec', label: t('product.sku.spec'), component: 'input', placeholder: t('product.sku.specPlaceholder') },
+  { field: 'image', label: t('product.sku.imageUrl'), component: 'input', placeholder: t('product.sku.imageUrlPlaceholder') },
+  { field: 'price', label: t('product.sku.price'), component: 'number', props: { min: 0, precision: 2 } },
+  { field: 'status', label: t('product.sku.onSale'), component: 'switch' },
 ]);
 
 const modalOpen = ref(false);
@@ -79,7 +82,7 @@ function openEdit(row: ProductSkuVO) {
 
 async function onSubmit() {
   if (selectedSpuId.value == null) {
-    message.warning('请先选择 SPU');
+    message.warning(t('product.sku.selectSpuFirst'));
     return;
   }
   if (!(await formRef.value?.validate())) return;
@@ -88,7 +91,7 @@ async function onSubmit() {
   try {
     if (editingId.value) await apiSkuUpdate(editingId.value, payload);
     else await apiSkuCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     await loadSkus();
   } finally {
@@ -98,7 +101,7 @@ async function onSubmit() {
 
 async function onDelete(row: ProductSkuVO) {
   await apiSkuDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   await loadSkus();
 }
 
@@ -109,10 +112,10 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, loadSkus });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="所属 SPU">
+        <a-form-item :label="t('product.sku.belongsToSpu')">
           <a-select
             v-model:value="selectedSpuId"
-            placeholder="请选择 SPU"
+            :placeholder="t('product.sku.selectSpu')"
             show-search
             option-filter-prop="label"
             allow-clear
@@ -134,7 +137,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, loadSkus });
           :disabled="selectedSpuId == null"
           @click="openCreate"
         >
-          新增 SKU
+          {{ t('product.sku.create') }}
         </a-button>
       </div>
 
@@ -153,14 +156,14 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, loadSkus });
           </template>
           <template v-else-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '上架' : '下架' }}
+              {{ record.status === 1 ? t('product.sku.onSale') : t('product.sku.offSale') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'product:sku:update'" @click="openEdit(record as ProductSkuVO)">编辑</a>
-              <a-popconfirm title="确认删除该 SKU？" @confirm="onDelete(record as ProductSkuVO)">
-                <a v-perm="'product:sku:delete'" class="text-red-500">删除</a>
+              <a v-perm="'product:sku:update'" @click="openEdit(record as ProductSkuVO)">{{ t('common.edit') }}</a>
+              <a-popconfirm :title="t('product.sku.deleteConfirm')" @confirm="onDelete(record as ProductSkuVO)">
+                <a v-perm="'product:sku:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -170,7 +173,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete, loadSkus });
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑 SKU' : '新增 SKU'"
+      :title="editingId ? t('product.sku.edit') : t('product.sku.create')"
       :confirm-loading="submitting"
       destroy-on-close
       @ok="onSubmit"

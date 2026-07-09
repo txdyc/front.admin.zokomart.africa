@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import type { TableColumnsType } from 'ant-design-vue';
@@ -21,13 +22,14 @@ const orders = ref<SalesOrderLabelVO[]>([]);
 const selectedKeys = ref<Id[]>([]);
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
+const { t } = useI18n();
 
-const columns: TableColumnsType = [
-  { title: '订单号', dataIndex: 'orderNo', key: 'orderNo' },
-  { title: '客户', dataIndex: 'customerName', key: 'customerName', width: 160 },
-  { title: '件数', dataIndex: 'totalQty', key: 'totalQty', width: 80 },
-  { title: '应收 (GHS)', dataIndex: 'totalAmount', key: 'totalAmount', width: 120 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('sales.order.orderNo'), dataIndex: 'orderNo', key: 'orderNo' },
+  { title: t('sales.order.customer'), dataIndex: 'customerName', key: 'customerName', width: 160 },
+  { title: t('sales.label.itemCount'), dataIndex: 'totalQty', key: 'totalQty', width: 80 },
+  { title: t('sales.label.receivableGhs'), dataIndex: 'totalAmount', key: 'totalAmount', width: 120 },
+]);
 
 const selectedOrders = computed(() =>
   orders.value.filter((o) => selectedKeys.value.includes(o.id)),
@@ -59,7 +61,7 @@ function openDrawer() {
 
 async function doPrint() {
   if (selectedOrders.value.length === 0) {
-    message.warning('请至少选择一个订单');
+    message.warning(t('sales.label.warnSelectOne'));
     return;
   }
   printing.value = true;
@@ -72,9 +74,9 @@ async function doPrint() {
     const qrMap = new Map<string, string>(qrPairs);
     const html = buildLabelsHtml(units, qrMap);
     const ok = printHtml(html);
-    if (!ok) message.error('打印窗口被拦截，请允许本站弹出窗口后重试');
+    if (!ok) message.error(t('sales.label.popupBlocked'));
   } catch {
-    message.error('生成面单失败，请重试');
+    message.error(t('sales.label.genFailed'));
   } finally {
     printing.value = false;
   }
@@ -86,9 +88,9 @@ defineExpose({ openDrawer, doPrint, labelCount });
 </script>
 
 <template>
-  <a-drawer v-model:open="open" title="打印今日面单" width="720" destroy-on-close>
+  <a-drawer v-model:open="open" :title="t('sales.order.printLabels')" width="720" destroy-on-close>
     <div class="mb-3">
-      已选 <b>{{ selectedOrders.length }}</b> 单，将打印 <b>{{ labelCount }}</b> 张面单
+      {{ t('sales.label.selectedSummary', { n: selectedOrders.length, m: labelCount }) }}
     </div>
     <a-table
       :columns="columns"
@@ -105,7 +107,7 @@ defineExpose({ openDrawer, doPrint, labelCount });
     </a-table>
     <template #footer>
       <a-space>
-        <a-button @click="open = false">取消</a-button>
+        <a-button @click="open = false">{{ t('common.cancel') }}</a-button>
         <a-button
           type="primary"
           :loading="printing"
@@ -113,7 +115,7 @@ defineExpose({ openDrawer, doPrint, labelCount });
           data-test="label-print-go"
           @click="doPrint"
         >
-          打印（{{ labelCount }} 张）
+          {{ t('sales.label.printBtn', { n: labelCount }) }}
         </a-button>
       </a-space>
     </template>

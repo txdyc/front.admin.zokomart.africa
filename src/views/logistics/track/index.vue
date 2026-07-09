@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -16,15 +17,16 @@ import type { SelectOption } from '@/components/SchemaForm.vue';
 import type { Id } from '@/types/api';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
+const { t } = useI18n();
 
-const STATUS: Record<SalesStatus, { label: string; color: string }> = {
-  PENDING_DISPATCH: { label: '待派送', color: 'default' },
-  DISPATCHING: { label: '派送中', color: 'blue' },
-  SIGNED: { label: '已签收', color: 'cyan' },
-  SIGNED_PAID: { label: '已签收已付', color: 'green' },
-  UNREACHABLE: { label: '无法送达', color: 'orange' },
-  REJECTED: { label: '已拒收', color: 'red' },
-};
+const STATUS = computed<Record<SalesStatus, { label: string; color: string }>>(() => ({
+  PENDING_DISPATCH: { label: t('sales.order.statusPendingDispatch'), color: 'default' },
+  DISPATCHING: { label: t('sales.order.statusDispatching'), color: 'blue' },
+  SIGNED: { label: t('sales.order.statusSigned'), color: 'cyan' },
+  SIGNED_PAID: { label: t('sales.order.statusSignedPaid'), color: 'green' },
+  UNREACHABLE: { label: t('sales.order.statusUnreachable'), color: 'orange' },
+  REJECTED: { label: t('sales.order.statusRejected'), color: 'red' },
+}));
 // 合法状态流转（与后端 SalesConst.TRANSITIONS 一致；dispatch 单列）
 const TRANSITIONS: Record<SalesStatus, SalesStatus[]> = {
   PENDING_DISPATCH: [],
@@ -53,16 +55,16 @@ async function loadProviders() {
 }
 onMounted(loadProviders);
 
-const listColumns: TableColumnsType = [
-  { title: '订单号', dataIndex: 'orderNo', key: 'orderNo' },
-  { title: '客户', dataIndex: 'customerName', key: 'customerName', width: 150 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 120 },
-  { title: '物流商', dataIndex: 'logisticsProviderId', key: 'logisticsProviderId', width: 130 },
-  { title: '应收 (GHS)', dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
-  { title: '实收 (GHS)', dataIndex: 'actualAmount', key: 'actualAmount', width: 110 },
-  { title: '完成', dataIndex: 'completed', key: 'completed', width: 80 },
-  { title: '操作', key: 'action', width: 80 },
-];
+const listColumns = computed<TableColumnsType>(() => [
+  { title: t('sales.order.orderNo'), dataIndex: 'orderNo', key: 'orderNo' },
+  { title: t('sales.order.customer'), dataIndex: 'customerName', key: 'customerName', width: 150 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
+  { title: t('logistics.track.providerCol'), dataIndex: 'logisticsProviderId', key: 'logisticsProviderId', width: 130 },
+  { title: t('logistics.track.receivableGhs'), dataIndex: 'totalAmount', key: 'totalAmount', width: 110 },
+  { title: t('logistics.track.receivedGhs'), dataIndex: 'actualAmount', key: 'actualAmount', width: 110 },
+  { title: t('sales.order.completed'), dataIndex: 'completed', key: 'completed', width: 80 },
+  { title: t('common.operation'), key: 'action', width: 80 },
+]);
 
 // ---------------- 详情 + 动作 ----------------
 const drawerOpen = ref(false);
@@ -94,11 +96,11 @@ function openDispatch() {
 }
 async function doDispatch() {
   if (dispatchForm.logisticsProviderId == null) {
-    message.warning('请选择物流服务商');
+    message.warning(t('logistics.track.selectProvider'));
     return;
   }
   if (dispatchForm.deliveryFee < 0) {
-    message.warning('派送费不能为负');
+    message.warning(t('logistics.track.feeNegative'));
     return;
   }
   acting.value = true;
@@ -107,7 +109,7 @@ async function doDispatch() {
       logisticsProviderId: dispatchForm.logisticsProviderId,
       deliveryFee: dispatchForm.deliveryFee,
     });
-    message.success('已派送');
+    message.success(t('logistics.track.dispatched'));
     dispatchOpen.value = false;
     await reloadDetail();
   } finally {
@@ -120,7 +122,7 @@ async function doUpdateStatus(status: SalesStatus) {
   acting.value = true;
   try {
     await apiLogisticsUpdateStatus(detail.value!.id, status);
-    message.success(`状态更新为「${STATUS[status].label}」`);
+    message.success(t('logistics.track.statusUpdatedTo', { label: STATUS.value[status].label }));
     await reloadDetail();
   } finally {
     acting.value = false;
@@ -138,13 +140,13 @@ function openReject(item: SalesOrderItemVO) {
 async function doReject() {
   const item = rejectForm.item!;
   if (rejectForm.rejectQty < 1 || rejectForm.rejectQty > item.qty) {
-    message.warning('拒收数量需在 1..订购数量之间');
+    message.warning(t('logistics.track.rejectQtyRange'));
     return;
   }
   acting.value = true;
   try {
     await apiLogisticsReject(detail.value!.id, { itemId: item.id, rejectQty: rejectForm.rejectQty });
-    message.success('已记录拒收');
+    message.success(t('logistics.track.rejectRecorded'));
     rejectOpen.value = false;
     await reloadDetail();
   } finally {
@@ -157,7 +159,7 @@ async function doComplete() {
   acting.value = true;
   try {
     await apiLogisticsComplete(detail.value!.id);
-    message.success('订单已完成，已结算实收金额');
+    message.success(t('logistics.track.completed'));
     await reloadDetail();
   } finally {
     acting.value = false;
@@ -173,9 +175,9 @@ defineExpose({
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-radio-group v-model:value="completedTab" button-style="solid" @change="onTabChange">
-        <a-radio-button value="all">全部</a-radio-button>
-        <a-radio-button value="pending">未完成</a-radio-button>
-        <a-radio-button value="completed">已完成</a-radio-button>
+        <a-radio-button value="all">{{ t('common.all') }}</a-radio-button>
+        <a-radio-button value="pending">{{ t('sales.order.tabPending') }}</a-radio-button>
+        <a-radio-button value="completed">{{ t('sales.order.tabCompleted') }}</a-radio-button>
       </a-radio-group>
     </a-card>
 
@@ -194,28 +196,28 @@ defineExpose({
           <template v-else-if="column.key === 'actualAmount'">{{ money(record.actualAmount) }}</template>
           <template v-else-if="column.key === 'completed'">
             <a-tag :color="record.completed === 1 ? 'green' : 'default'">
-              {{ record.completed === 1 ? '已完成' : '进行中' }}
+              {{ record.completed === 1 ? t('sales.order.completedYes') : t('sales.order.inProgress') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a data-test="track-detail" @click="openDetail(record as SalesOrderVO)">处理</a>
+            <a data-test="track-detail" @click="openDetail(record as SalesOrderVO)">{{ t('logistics.track.handle') }}</a>
           </template>
         </template>
       </BasicTable>
     </a-card>
 
     <!-- 详情 + 动作 -->
-    <a-drawer v-model:open="drawerOpen" title="物流处理" width="860" destroy-on-close>
+    <a-drawer v-model:open="drawerOpen" :title="t('logistics.track.handlingTitle')" width="860" destroy-on-close>
       <template v-if="detail">
         <a-descriptions size="small" :column="2" bordered class="mb-3">
-          <a-descriptions-item label="订单号">{{ detail.orderNo }}</a-descriptions-item>
-          <a-descriptions-item label="状态">
+          <a-descriptions-item :label="t('sales.order.orderNo')">{{ detail.orderNo }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.status')">
             <a-tag :color="STATUS[detail.status].color">{{ STATUS[detail.status].label }}</a-tag>
           </a-descriptions-item>
-          <a-descriptions-item label="客户">{{ detail.customerName }} / {{ detail.customerPhone }}</a-descriptions-item>
-          <a-descriptions-item label="地址">{{ detail.customerAddress }}</a-descriptions-item>
-          <a-descriptions-item label="应收 (GHS)">{{ money(detail.totalAmount) }}</a-descriptions-item>
-          <a-descriptions-item label="实收 (GHS)">{{ money(detail.actualAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('sales.order.customer')">{{ detail.customerName }} / {{ detail.customerPhone }}</a-descriptions-item>
+          <a-descriptions-item :label="t('common.address')">{{ detail.customerAddress }}</a-descriptions-item>
+          <a-descriptions-item :label="t('logistics.track.receivableGhs')">{{ money(detail.totalAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('logistics.track.receivedGhs')">{{ money(detail.actualAmount) }}</a-descriptions-item>
         </a-descriptions>
 
         <!-- 动作区 -->
@@ -228,7 +230,7 @@ defineExpose({
               data-test="track-dispatch"
               @click="openDispatch"
             >
-              派送
+              {{ t('logistics.track.dispatch') }}
             </a-button>
             <a-button
               v-for="s in statusTargets"
@@ -237,11 +239,11 @@ defineExpose({
               :loading="acting"
               @click="doUpdateStatus(s)"
             >
-              转「{{ STATUS[s].label }}」
+              {{ t('logistics.track.toStatus', { label: STATUS[s].label }) }}
             </a-button>
-            <a-popconfirm v-if="canComplete" title="确认完成并结算实收？" @confirm="doComplete">
+            <a-popconfirm v-if="canComplete" :title="t('logistics.track.confirmComplete')" @confirm="doComplete">
               <a-button v-perm="'logistics:complete'" type="primary" :loading="acting" data-test="track-complete">
-                完成
+                {{ t('logistics.track.complete') }}
               </a-button>
             </a-popconfirm>
           </a-space>
@@ -249,13 +251,13 @@ defineExpose({
 
         <a-table
           :columns="[
-            { title: '产品', dataIndex: 'productName', key: 'productName' },
-            { title: '单价', dataIndex: 'unitPrice', key: 'unitPrice', width: 90 },
-            { title: '数量', dataIndex: 'qty', key: 'qty', width: 70 },
-            { title: '拒收', dataIndex: 'rejectQty', key: 'rejectQty', width: 70 },
-            { title: '小计', dataIndex: 'amount', key: 'amount', width: 100 },
-            { title: '实收', dataIndex: 'actualAmount', key: 'actualAmount', width: 100 },
-            { title: '操作', key: 'op', width: 80 },
+            { title: t('sales.order.product'), dataIndex: 'productName', key: 'productName' },
+            { title: t('sales.order.unitPrice'), dataIndex: 'unitPrice', key: 'unitPrice', width: 90 },
+            { title: t('common.quantity'), dataIndex: 'qty', key: 'qty', width: 70 },
+            { title: t('sales.order.rejectQty'), dataIndex: 'rejectQty', key: 'rejectQty', width: 70 },
+            { title: t('common.subtotal'), dataIndex: 'amount', key: 'amount', width: 100 },
+            { title: t('logistics.track.received'), dataIndex: 'actualAmount', key: 'actualAmount', width: 100 },
+            { title: t('common.operation'), key: 'op', width: 80 },
           ]"
           :data-source="detail.items"
           :pagination="false"
@@ -273,7 +275,7 @@ defineExpose({
                 class="text-red-500"
                 data-test="track-reject"
                 @click="openReject(record as SalesOrderItemVO)"
-              >拒收</a>
+              >{{ t('logistics.track.reject') }}</a>
               <span v-else class="text-gray-300">—</span>
             </template>
           </template>
@@ -282,29 +284,29 @@ defineExpose({
     </a-drawer>
 
     <!-- 派送弹窗 -->
-    <a-modal v-model:open="dispatchOpen" title="派送" :confirm-loading="acting" @ok="doDispatch">
+    <a-modal v-model:open="dispatchOpen" :title="t('logistics.track.dispatchTitle')" :confirm-loading="acting" @ok="doDispatch">
       <a-form layout="vertical">
-        <a-form-item label="物流服务商" required>
+        <a-form-item :label="t('logistics.track.provider')" required>
           <a-select
             v-model:value="dispatchForm.logisticsProviderId"
-            placeholder="请选择物流服务商"
+            :placeholder="t('logistics.track.selectProvider')"
             show-search
             option-filter-prop="label"
             :options="providerOptions"
             data-test="dispatch-provider"
           />
         </a-form-item>
-        <a-form-item label="派送费 (GHS)" required>
+        <a-form-item :label="t('logistics.track.deliveryFeeGhs')" required>
           <a-input-number v-model:value="dispatchForm.deliveryFee" :min="0" :precision="2" class="w-full" />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <!-- 拒收弹窗 -->
-    <a-modal v-model:open="rejectOpen" title="标记拒收" :confirm-loading="acting" @ok="doReject">
+    <a-modal v-model:open="rejectOpen" :title="t('logistics.track.rejectTitle')" :confirm-loading="acting" @ok="doReject">
       <a-form v-if="rejectForm.item" layout="vertical">
-        <a-form-item label="产品">{{ rejectForm.item.productName }}（订购 {{ rejectForm.item.qty }}）</a-form-item>
-        <a-form-item label="拒收数量" required>
+        <a-form-item :label="t('sales.order.product')">{{ rejectForm.item.productName }}{{ t('logistics.track.orderedQty', { qty: rejectForm.item.qty }) }}</a-form-item>
+        <a-form-item :label="t('logistics.track.rejectQtyLabel')" required>
           <a-input-number v-model:value="rejectForm.rejectQty" :min="1" :max="rejectForm.item.qty" :precision="0" class="w-full" />
         </a-form-item>
       </a-form>

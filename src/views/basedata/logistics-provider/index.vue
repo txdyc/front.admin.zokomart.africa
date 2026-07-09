@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -13,6 +14,8 @@ import {
 import type { LogisticsProviderVO, LogisticsProviderSaveDTO } from '@/types/basedata';
 import type { Id } from '@/types/api';
 
+const { t } = useI18n();
+
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
 
@@ -25,23 +28,23 @@ const onReset = () => {
   query.value = {};
 };
 
-const columns: TableColumnsType = [
-  { title: '服务商名', dataIndex: 'name', key: 'name' },
-  { title: '编码', dataIndex: 'code', key: 'code' },
-  { title: '联系人', dataIndex: 'contactPerson', key: 'contactPerson' },
-  { title: '联系电话', dataIndex: 'contactPhone', key: 'contactPhone' },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
-  { title: '操作', key: 'action', width: 160 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('basedata.logisticsProvider.name'), dataIndex: 'name', key: 'name' },
+  { title: t('common.code'), dataIndex: 'code', key: 'code' },
+  { title: t('common.contact'), dataIndex: 'contactPerson', key: 'contactPerson' },
+  { title: t('common.contactPhone'), dataIndex: 'contactPhone', key: 'contactPhone' },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 90 },
+  { title: t('common.operation'), key: 'action', width: 160 },
+]);
 
-const formSchema: FormField[] = [
-  { field: 'name', label: '服务商名', component: 'input', rules: [{ required: true, message: '请输入服务商名' }] },
-  { field: 'code', label: '编码', component: 'input' },
-  { field: 'contactPerson', label: '联系人', component: 'input' },
-  { field: 'contactPhone', label: '联系电话', component: 'input' },
-  { field: 'status', label: '启用', component: 'switch' },
-  { field: 'remark', label: '备注', component: 'textarea' },
-];
+const formSchema = computed<FormField[]>(() => [
+  { field: 'name', label: t('basedata.logisticsProvider.name'), component: 'input', rules: [{ required: true, message: t('basedata.logisticsProvider.inputName') }] },
+  { field: 'code', label: t('common.code'), component: 'input' },
+  { field: 'contactPerson', label: t('common.contact'), component: 'input' },
+  { field: 'contactPhone', label: t('common.contactPhone'), component: 'input' },
+  { field: 'status', label: t('common.enabled'), component: 'switch' },
+  { field: 'remark', label: t('common.remark'), component: 'textarea' },
+]);
 
 const modalOpen = ref(false);
 const editingId = ref<Id | null>(null);
@@ -73,7 +76,7 @@ async function onSubmit() {
   try {
     if (editingId.value) await apiLogisticsProviderUpdate(editingId.value, payload);
     else await apiLogisticsProviderCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -83,7 +86,7 @@ async function onSubmit() {
 
 async function onDelete(row: LogisticsProviderVO) {
   await apiLogisticsProviderDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 
@@ -94,30 +97,30 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="关键字">
+        <a-form-item :label="t('common.keyword')">
           <a-input
             v-model:value="searchForm.keyword"
-            placeholder="服务商名/编码"
+            :placeholder="t('basedata.logisticsProvider.keywordPlaceholder')"
             allow-clear
             @press-enter="onSearch"
           />
         </a-form-item>
-        <a-form-item label="状态">
+        <a-form-item :label="t('common.status')">
           <a-select
             v-model:value="searchForm.status"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             allow-clear
             style="width: 120px"
             :options="[
-              { label: '启用', value: 1 },
-              { label: '停用', value: 0 },
+              { label: t('common.enabled'), value: 1 },
+              { label: t('common.disabled'), value: 0 },
             ]"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -131,7 +134,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
           data-test="logistics-provider-create"
           @click="openCreate"
         >
-          新增服务商
+          {{ t('basedata.logisticsProvider.createProvider') }}
         </a-button>
       </div>
 
@@ -139,14 +142,14 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '启用' : '停用' }}
+              {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'logisticsProvider:update'" @click="openEdit(record as LogisticsProviderVO)">编辑</a>
-              <a-popconfirm title="确认删除该服务商？" @confirm="onDelete(record as LogisticsProviderVO)">
-                <a v-perm="'logisticsProvider:delete'" class="text-red-500">删除</a>
+              <a v-perm="'logisticsProvider:update'" @click="openEdit(record as LogisticsProviderVO)">{{ t('common.edit') }}</a>
+              <a-popconfirm :title="t('basedata.logisticsProvider.deleteConfirm')" @confirm="onDelete(record as LogisticsProviderVO)">
+                <a v-perm="'logisticsProvider:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -156,7 +159,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onDelete });
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑服务商' : '新增服务商'"
+      :title="editingId ? t('basedata.logisticsProvider.editProvider') : t('basedata.logisticsProvider.createProvider')"
       :confirm-loading="submitting"
       destroy-on-close
       @ok="onSubmit"

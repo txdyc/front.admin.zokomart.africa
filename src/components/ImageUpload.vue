@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { UploadProps } from 'ant-design-vue';
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue';
 import { apiUploadImage } from '@/api/file';
+
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -21,11 +24,11 @@ const previewUrl = computed(() => props.value || '');
 
 const beforeUpload = (file: File): boolean => {
   if (!file.type.startsWith('image/')) {
-    message.error('只能上传图片文件');
+    message.error(t('common.uploadImageOnly'));
     return false;
   }
   if (file.size / 1024 / 1024 > props.maxSize) {
-    message.error(`图片不能超过 ${props.maxSize}MB`);
+    message.error(t('common.uploadTooLarge', { size: props.maxSize }));
     return false;
   }
   return true;
@@ -38,7 +41,7 @@ const customRequest: UploadProps['customRequest'] = async (opt) => {
     emit('update:value', res.url);
     opt.onSuccess?.(res, undefined as never);
   } catch (e) {
-    message.error('上传失败');
+    message.error(t('common.uploadFailed'));
     opt.onError?.(e as Error);
   } finally {
     loading.value = false;
@@ -63,10 +66,10 @@ defineExpose({ beforeUpload, customRequest, clear });
       <div v-else class="placeholder">
         <loading-outlined v-if="loading" />
         <plus-outlined v-else />
-        <div class="mt-1 text-xs">上传</div>
+        <div class="mt-1 text-xs">{{ t('common.upload') }}</div>
       </div>
     </a-upload>
-    <a v-if="previewUrl" class="text-xs text-red-500" @click.stop="clear">移除</a>
+    <a v-if="previewUrl" class="text-xs text-red-500" @click.stop="clear">{{ t('common.remove') }}</a>
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
@@ -8,6 +9,8 @@ import { apiRolePage, apiRoleCreate, apiRoleUpdate, apiRoleDelete } from '@/api/
 import { apiMenuTree } from '@/api/system/menu';
 import type { RoleVO, RoleSaveDTO } from '@/types/system';
 import type { MenuVO, Id } from '@/types/api';
+
+const { t } = useI18n();
 
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const formRef = ref<InstanceType<typeof SchemaForm>>();
@@ -21,21 +24,21 @@ const onReset = () => {
   query.value = {};
 };
 
-const columns: TableColumnsType = [
-  { title: '角色名', dataIndex: 'name', key: 'name' },
-  { title: '角色编码', dataIndex: 'code', key: 'code' },
-  { title: '排序', dataIndex: 'sort', key: 'sort', width: 90 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
-  { title: '操作', key: 'action', width: 180 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('system.role.roleName'), dataIndex: 'name', key: 'name' },
+  { title: t('system.role.roleCode'), dataIndex: 'code', key: 'code' },
+  { title: t('common.sort'), dataIndex: 'sort', key: 'sort', width: 90 },
+  { title: t('common.status'), dataIndex: 'status', key: 'status', width: 90 },
+  { title: t('common.operation'), key: 'action', width: 180 },
+]);
 
-const formSchema: FormField[] = [
-  { field: 'name', label: '角色名', component: 'input', rules: [{ required: true, message: '请输入角色名' }] },
-  { field: 'code', label: '角色编码', component: 'input', rules: [{ required: true, message: '请输入角色编码' }] },
-  { field: 'sort', label: '排序', component: 'number' },
-  { field: 'status', label: '启用', component: 'switch' },
-  { field: 'remark', label: '备注', component: 'textarea' },
-];
+const formSchema = computed<FormField[]>(() => [
+  { field: 'name', label: t('system.role.roleName'), component: 'input', rules: [{ required: true, message: t('system.role.inputRoleName') }] },
+  { field: 'code', label: t('system.role.roleCode'), component: 'input', rules: [{ required: true, message: t('system.role.inputRoleCode') }] },
+  { field: 'sort', label: t('common.sort'), component: 'number' },
+  { field: 'status', label: t('common.enabled'), component: 'switch' },
+  { field: 'remark', label: t('common.remark'), component: 'textarea' },
+]);
 
 // ---- 菜单授权树 ----
 type TreeKey = string | number;
@@ -92,7 +95,7 @@ async function onSubmit() {
   try {
     if (editingId.value) await apiRoleUpdate(editingId.value, payload);
     else await apiRoleCreate(payload);
-    message.success('保存成功');
+    message.success(t('common.saveSuccess'));
     modalOpen.value = false;
     tableRef.value?.reload();
   } finally {
@@ -102,7 +105,7 @@ async function onSubmit() {
 
 async function onDelete(row: RoleVO) {
   await apiRoleDelete(row.id);
-  message.success('已删除');
+  message.success(t('common.deleteSuccess'));
   tableRef.value?.reload();
 }
 
@@ -113,18 +116,18 @@ defineExpose({ openCreate, openEdit, onSubmit, onTreeCheck });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="关键字">
+        <a-form-item :label="t('common.keyword')">
           <a-input
             v-model:value="searchForm.keyword"
-            placeholder="角色名/编码"
+            :placeholder="t('system.role.keywordPlaceholder')"
             allow-clear
             @press-enter="onSearch"
           />
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -133,7 +136,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onTreeCheck });
     <a-card :bordered="false">
       <div class="mb-3">
         <a-button v-perm="'system:role:create'" type="primary" data-test="role-create" @click="openCreate">
-          新增角色
+          {{ t('system.role.createRole') }}
         </a-button>
       </div>
 
@@ -141,14 +144,14 @@ defineExpose({ openCreate, openEdit, onSubmit, onTreeCheck });
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '启用' : '停用' }}
+              {{ record.status === 1 ? t('common.enabled') : t('common.disabled') }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>
-              <a v-perm="'system:role:update'" @click="openEdit(record)">编辑</a>
-              <a-popconfirm title="确认删除该角色？" @confirm="onDelete(record)">
-                <a v-perm="'system:role:delete'" class="text-red-500">删除</a>
+              <a v-perm="'system:role:update'" @click="openEdit(record)">{{ t('common.edit') }}</a>
+              <a-popconfirm :title="t('system.role.deleteConfirm')" @confirm="onDelete(record)">
+                <a v-perm="'system:role:delete'" class="text-red-500">{{ t('common.delete') }}</a>
               </a-popconfirm>
             </a-space>
           </template>
@@ -158,7 +161,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onTreeCheck });
 
     <a-modal
       v-model:open="modalOpen"
-      :title="editingId ? '编辑角色' : '新增角色'"
+      :title="editingId ? t('system.role.editRole') : t('system.role.createRole')"
       :confirm-loading="submitting"
       destroy-on-close
       width="640px"
@@ -166,7 +169,7 @@ defineExpose({ openCreate, openEdit, onSubmit, onTreeCheck });
     >
       <SchemaForm ref="formRef" :schema="formSchema" :initial="formInitial" />
       <div class="mt-2">
-        <div class="mb-2 font-medium">菜单授权</div>
+        <div class="mb-2 font-medium">{{ t('system.role.menuAuth') }}</div>
         <a-tree
           v-model:checked-keys="checkedKeys"
           checkable

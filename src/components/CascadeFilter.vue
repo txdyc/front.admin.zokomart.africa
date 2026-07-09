@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { SelectOption } from '@/components/SchemaForm.vue';
 import { apiSupplierPage } from '@/api/basedata/supplier';
 import { apiSupplierBrands, apiSupplierCategories } from '@/api/product/supplierProduct';
@@ -16,7 +17,14 @@ const emit = defineEmits<{
   (e: 'change', v: SupplierProductQuery): void;
 }>();
 
+const { t } = useI18n();
+
 const model = reactive<SupplierProductQuery>({ ...props.modelValue });
+
+const statusOptions = computed(() => [
+  { label: t('common.enabled'), value: 1 },
+  { label: t('common.disabled'), value: 0 },
+]);
 
 const supplierOptions = ref<SelectOption[]>([]);
 const brandOptions = ref<SelectOption[]>([]);
@@ -69,10 +77,10 @@ defineExpose({ onSupplierChange, loadSupplierScopedOptions });
 
 <template>
   <a-form layout="inline">
-    <a-form-item label="供应商">
+    <a-form-item :label="t('cascade.supplier')">
       <a-select
         v-model:value="model.supplierId"
-        placeholder="请选择供应商"
+        :placeholder="t('cascade.selectSupplier')"
         show-search
         option-filter-prop="label"
         allow-clear
@@ -82,10 +90,10 @@ defineExpose({ onSupplierChange, loadSupplierScopedOptions });
         @change="onSupplierChange"
       />
     </a-form-item>
-    <a-form-item label="品牌">
+    <a-form-item :label="t('cascade.brand')">
       <a-select
         v-model:value="model.brandId"
-        placeholder="全部"
+        :placeholder="t('common.all')"
         allow-clear
         style="width: 180px"
         :disabled="model.supplierId == null"
@@ -94,10 +102,10 @@ defineExpose({ onSupplierChange, loadSupplierScopedOptions });
         @change="emitChange"
       />
     </a-form-item>
-    <a-form-item label="分类">
+    <a-form-item :label="t('cascade.category')">
       <a-select
         v-model:value="model.categoryId"
-        placeholder="全部"
+        :placeholder="t('common.all')"
         allow-clear
         style="width: 200px"
         :disabled="model.supplierId == null"
@@ -106,29 +114,26 @@ defineExpose({ onSupplierChange, loadSupplierScopedOptions });
         @change="emitChange"
       />
     </a-form-item>
-    <a-form-item label="关键字">
+    <a-form-item :label="t('cascade.keyword')">
       <a-input
         v-model:value="model.keyword"
-        placeholder="名称/编码"
+        :placeholder="t('cascade.keywordPlaceholder')"
         allow-clear
         @press-enter="emitChange"
       />
     </a-form-item>
-    <a-form-item label="状态">
+    <a-form-item :label="t('common.status')">
       <a-select
         v-model:value="model.status"
-        placeholder="全部"
+        :placeholder="t('common.all')"
         allow-clear
         style="width: 120px"
-        :options="[
-          { label: '启用', value: 1 },
-          { label: '停用', value: 0 },
-        ]"
+        :options="statusOptions"
         @change="emitChange"
       />
     </a-form-item>
     <a-form-item>
-      <a-button type="primary" data-test="cascade-search" @click="emitChange">查询</a-button>
+      <a-button type="primary" data-test="cascade-search" @click="emitChange">{{ t('common.search') }}</a-button>
     </a-form-item>
   </a-form>
 </template>

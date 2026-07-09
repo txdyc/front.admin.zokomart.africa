@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
 import { apiCustomerPage } from '@/api/customer';
+
+const { t } = useI18n();
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
 
@@ -15,14 +18,14 @@ const onReset = () => {
   query.value = {};
 };
 
-const columns: TableColumnsType = [
-  { title: '客户姓名', dataIndex: 'customerName', key: 'customerName' },
-  { title: '电话', dataIndex: 'customerPhone', key: 'customerPhone', width: 150 },
-  { title: '地址', dataIndex: 'customerAddress', key: 'customerAddress' },
-  { title: '订单数', dataIndex: 'orderCount', key: 'orderCount', width: 90 },
-  { title: '累计金额 (GHS)', dataIndex: 'totalAmount', key: 'totalAmount', width: 140 },
-  { title: '最近下单时间', dataIndex: 'lastOrderTime', key: 'lastOrderTime', width: 180 },
-];
+const columns = computed<TableColumnsType>(() => [
+  { title: t('customer.customerName'), dataIndex: 'customerName', key: 'customerName' },
+  { title: t('customer.phone'), dataIndex: 'customerPhone', key: 'customerPhone', width: 150 },
+  { title: t('common.address'), dataIndex: 'customerAddress', key: 'customerAddress' },
+  { title: t('customer.orderCount'), dataIndex: 'orderCount', key: 'orderCount', width: 90 },
+  { title: t('customer.totalAmount'), dataIndex: 'totalAmount', key: 'totalAmount', width: 140 },
+  { title: t('customer.lastOrderTime'), dataIndex: 'lastOrderTime', key: 'lastOrderTime', width: 180 },
+]);
 
 defineExpose({ searchForm, query, onSearch, onReset });
 </script>
@@ -31,10 +34,10 @@ defineExpose({ searchForm, query, onSearch, onReset });
   <div>
     <a-card :bordered="false" class="mb-3">
       <a-form layout="inline">
-        <a-form-item label="关键字">
+        <a-form-item :label="t('common.keyword')">
           <a-input
             v-model:value="searchForm.keyword"
-            placeholder="客户姓名 / 电话"
+            :placeholder="t('customer.keywordPlaceholder')"
             allow-clear
             style="width: 220px"
             @press-enter="onSearch"
@@ -42,8 +45,8 @@ defineExpose({ searchForm, query, onSearch, onReset });
         </a-form-item>
         <a-form-item>
           <a-space>
-            <a-button type="primary" data-test="customer-search" @click="onSearch">查询</a-button>
-            <a-button @click="onReset">重置</a-button>
+            <a-button type="primary" data-test="customer-search" @click="onSearch">{{ t('common.search') }}</a-button>
+            <a-button @click="onReset">{{ t('common.reset') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
