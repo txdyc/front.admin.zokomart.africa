@@ -429,7 +429,6 @@ export default {
       rejectTitle: '标记拒收',
       orderedQty: '（订购 {qty}）',
       rejectQtyLabel: '拒收数量',
-      feeNegative: '派送费不能为负',
       dispatched: '已派送',
       statusUpdatedTo: '状态更新为「{label}」',
       rejectQtyRange: '拒收数量需在 1..订购数量之间',

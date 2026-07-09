@@ -429,7 +429,6 @@ export default {
       rejectTitle: 'Mark Rejection',
       orderedQty: ' (ordered {qty})',
       rejectQtyLabel: 'Reject Qty',
-      feeNegative: 'Delivery fee cannot be negative',
       dispatched: 'Dispatched',
       statusUpdatedTo: 'Status updated to "{label}"',
       rejectQtyRange: 'Reject quantity must be between 1 and the ordered quantity',

@@ -88,7 +88,7 @@ const canComplete = computed(() => !!curStatus.value && SIGNED_STATES.includes(c
 
 // 派送（派送费可留空：NULL=未知，送达后于签收/拒签时补录）
 const dispatchOpen = ref(false);
-const dispatchForm = reactive<{ logisticsProviderId?: Id; deliveryFee?: number }>({});
+const dispatchForm = reactive<{ logisticsProviderId?: Id; deliveryFee?: number | null }>({});
 function openDispatch() {
   dispatchForm.logisticsProviderId = undefined;
   dispatchForm.deliveryFee = undefined;
@@ -115,7 +115,7 @@ async function doDispatch() {
 
 // 状态流转：outcome（签收/签收已付/拒签）弹费用确认框，其余一键直发
 const FEE_PROMPT_STATES: SalesStatus[] = ['SIGNED', 'SIGNED_PAID', 'REJECTED'];
-const statusModal = reactive<{ open: boolean; target: SalesStatus | null; deliveryFee?: number }>({
+const statusModal = reactive<{ open: boolean; target: SalesStatus | null; deliveryFee?: number | null }>({
   open: false,
   target: null,
 });
@@ -317,7 +317,14 @@ defineExpose({
           />
         </a-form-item>
         <a-form-item :label="t('logistics.track.deliveryFeeGhs')" :extra="t('logistics.track.feeOptionalHint')">
-          <a-input-number v-model:value="dispatchForm.deliveryFee" :min="0" :precision="2" class="w-full" data-test="dispatch-fee" />
+          <a-input-number
+            :value="dispatchForm.deliveryFee ?? undefined"
+            :min="0"
+            :precision="2"
+            class="w-full"
+            data-test="dispatch-fee"
+            @change="(v: any) => (dispatchForm.deliveryFee = v)"
+          />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -341,7 +348,14 @@ defineExpose({
           </a-tag>
         </a-form-item>
         <a-form-item :label="t('logistics.track.deliveryFeeGhs')" :extra="t('logistics.track.deliveryFeeNowHint')">
-          <a-input-number v-model:value="statusModal.deliveryFee" :min="0" :precision="2" class="w-full" data-test="status-fee" />
+          <a-input-number
+            :value="statusModal.deliveryFee ?? undefined"
+            :min="0"
+            :precision="2"
+            class="w-full"
+            data-test="status-fee"
+            @change="(v: any) => (statusModal.deliveryFee = v)"
+          />
         </a-form-item>
       </a-form>
     </a-modal>
