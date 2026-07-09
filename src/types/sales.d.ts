@@ -80,6 +80,7 @@ export interface LogisticsDispatchDTO {
 }
 export interface LogisticsStatusUpdateDTO {
   status: SalesStatus;
+  /** 省略/null = 不修改现有派送费（无法清回未知） */
   deliveryFee?: number | null;
 }
 export interface RejectItemDTO {

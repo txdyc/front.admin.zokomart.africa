@@ -86,12 +86,12 @@ const statusTargets = computed<SalesStatus[]>(() => (curStatus.value ? TRANSITIO
 const canReject = computed(() => !!curStatus.value && SIGNED_STATES.includes(curStatus.value));
 const canComplete = computed(() => !!curStatus.value && SIGNED_STATES.includes(curStatus.value));
 
-// 派送
+// 派送（派送费可留空：NULL=未知，送达后于签收/拒签时补录）
 const dispatchOpen = ref(false);
-const dispatchForm = reactive<{ logisticsProviderId?: Id; deliveryFee: number }>({ deliveryFee: 0 });
+const dispatchForm = reactive<{ logisticsProviderId?: Id; deliveryFee?: number }>({});
 function openDispatch() {
   dispatchForm.logisticsProviderId = undefined;
-  dispatchForm.deliveryFee = 0;
+  dispatchForm.deliveryFee = undefined;
   dispatchOpen.value = true;
 }
 async function doDispatch() {
@@ -99,15 +99,11 @@ async function doDispatch() {
     message.warning(t('logistics.track.selectProvider'));
     return;
   }
-  if (dispatchForm.deliveryFee < 0) {
-    message.warning(t('logistics.track.feeNegative'));
-    return;
-  }
   acting.value = true;
   try {
     await apiLogisticsDispatch(detail.value!.id, {
       logisticsProviderId: dispatchForm.logisticsProviderId,
-      deliveryFee: dispatchForm.deliveryFee,
+      deliveryFee: dispatchForm.deliveryFee ?? null,
     });
     message.success(t('logistics.track.dispatched'));
     dispatchOpen.value = false;
@@ -117,16 +113,35 @@ async function doDispatch() {
   }
 }
 
-// 状态流转
-async function doUpdateStatus(status: SalesStatus) {
+// 状态流转：outcome（签收/签收已付/拒签）弹费用确认框，其余一键直发
+const FEE_PROMPT_STATES: SalesStatus[] = ['SIGNED', 'SIGNED_PAID', 'REJECTED'];
+const statusModal = reactive<{ open: boolean; target: SalesStatus | null; deliveryFee?: number }>({
+  open: false,
+  target: null,
+});
+function onStatusClick(s: SalesStatus) {
+  if (FEE_PROMPT_STATES.includes(s)) {
+    statusModal.target = s;
+    statusModal.deliveryFee = detail.value?.deliveryFee ?? undefined;
+    statusModal.open = true;
+  } else {
+    doUpdateStatus(s, null);
+  }
+}
+async function doUpdateStatus(status: SalesStatus, deliveryFee: number | null) {
   acting.value = true;
   try {
-    await apiLogisticsUpdateStatus(detail.value!.id, status);
+    await apiLogisticsUpdateStatus(detail.value!.id, { status, deliveryFee });
     message.success(t('logistics.track.statusUpdatedTo', { label: STATUS.value[status].label }));
     await reloadDetail();
   } finally {
     acting.value = false;
   }
+}
+async function doStatusConfirm() {
+  if (!statusModal.target) return;
+  await doUpdateStatus(statusModal.target, statusModal.deliveryFee ?? null);
+  statusModal.open = false;
 }
 
 // 拒收
@@ -168,6 +183,7 @@ async function doComplete() {
 
 defineExpose({
   openDetail, openDispatch, doDispatch, doUpdateStatus, openReject, doReject, doComplete,
+  onStatusClick, doStatusConfirm, dispatchForm, statusModal,
 });
 </script>
 
@@ -218,6 +234,9 @@ defineExpose({
           <a-descriptions-item :label="t('common.address')">{{ detail.customerAddress }}</a-descriptions-item>
           <a-descriptions-item :label="t('logistics.track.receivableGhs')">{{ money(detail.totalAmount) }}</a-descriptions-item>
           <a-descriptions-item :label="t('logistics.track.receivedGhs')">{{ money(detail.actualAmount) }}</a-descriptions-item>
+          <a-descriptions-item :label="t('logistics.track.deliveryFeeGhs')">
+            {{ detail.deliveryFee != null ? money(detail.deliveryFee) : '—' }}
+          </a-descriptions-item>
         </a-descriptions>
 
         <!-- 动作区 -->
@@ -237,7 +256,8 @@ defineExpose({
               :key="s"
               v-perm="'logistics:status'"
               :loading="acting"
-              @click="doUpdateStatus(s)"
+              :data-test="`track-to-${s}`"
+              @click="onStatusClick(s)"
             >
               {{ t('logistics.track.toStatus', { label: STATUS[s].label }) }}
             </a-button>
@@ -296,8 +316,8 @@ defineExpose({
             data-test="dispatch-provider"
           />
         </a-form-item>
-        <a-form-item :label="t('logistics.track.deliveryFeeGhs')" required>
-          <a-input-number v-model:value="dispatchForm.deliveryFee" :min="0" :precision="2" class="w-full" />
+        <a-form-item :label="t('logistics.track.deliveryFeeGhs')" :extra="t('logistics.track.feeOptionalHint')">
+          <a-input-number v-model:value="dispatchForm.deliveryFee" :min="0" :precision="2" class="w-full" data-test="dispatch-fee" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -308,6 +328,20 @@ defineExpose({
         <a-form-item :label="t('sales.order.product')">{{ rejectForm.item.productName }}{{ t('logistics.track.orderedQty', { qty: rejectForm.item.qty }) }}</a-form-item>
         <a-form-item :label="t('logistics.track.rejectQtyLabel')" required>
           <a-input-number v-model:value="rejectForm.rejectQty" :min="1" :max="rejectForm.item.qty" :precision="0" class="w-full" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- 状态确认 + 补录派送费弹窗（SIGNED / SIGNED_PAID / REJECTED） -->
+    <a-modal v-model:open="statusModal.open" :title="t('logistics.track.statusConfirmTitle')" :confirm-loading="acting" @ok="doStatusConfirm">
+      <a-form layout="vertical">
+        <a-form-item :label="t('common.status')">
+          <a-tag v-if="statusModal.target" :color="STATUS[statusModal.target].color">
+            {{ STATUS[statusModal.target].label }}
+          </a-tag>
+        </a-form-item>
+        <a-form-item :label="t('logistics.track.deliveryFeeGhs')" :extra="t('logistics.track.deliveryFeeNowHint')">
+          <a-input-number v-model:value="statusModal.deliveryFee" :min="0" :precision="2" class="w-full" data-test="status-fee" />
         </a-form-item>
       </a-form>
     </a-modal>
