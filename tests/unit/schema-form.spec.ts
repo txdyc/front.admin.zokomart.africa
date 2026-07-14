@@ -22,4 +22,15 @@ describe('SchemaForm', () => {
     await flushPromises();
     expect(await (wrapper.vm as any).validate()).toBe(true);
   });
+
+  it('date 组件渲染 a-date-picker 并以 YYYY-MM-DD 字符串读写', () => {
+    const wrapper = mount(SchemaForm, {
+      props: {
+        schema: [{ field: 'd', label: '日期', component: 'date' } as FormField],
+        initial: { d: '2026-07-09' },
+      },
+    });
+    expect(wrapper.findComponent({ name: 'ADatePicker' }).exists()).toBe(true);
+    expect((wrapper.vm as any).getValues()).toEqual({ d: '2026-07-09' });
+  });
 });
