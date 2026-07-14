@@ -118,10 +118,50 @@ describe('物流跟踪页', () => {
     apiSalesOrderGet.mockResolvedValue({ id: 6, status: 'SIGNED', items: [] });
     await vm.openDetail({ id: 6 });
     await flushPromises();
-    await vm.doUpdateStatus('SIGNED_PAID');
+    await vm.doUpdateStatus('SIGNED_PAID', null);
     await vm.doComplete();
     await flushPromises();
-    expect(apiLogisticsUpdateStatus).toHaveBeenCalledWith(6, 'SIGNED_PAID');
+    expect(apiLogisticsUpdateStatus).toHaveBeenCalledWith(6, { status: 'SIGNED_PAID', deliveryFee: null });
     expect(apiLogisticsComplete).toHaveBeenCalledWith(6);
+  });
+
+  it('派送：不填派送费 → 载荷 deliveryFee: null（NULL=未知）', async () => {
+    setUser({ isSuper: 1 });
+    const vm = mountPage().vm as any;
+    await openWith(vm, { id: 7, status: 'PENDING_DISPATCH', items: [] });
+    vm.openDispatch();
+    vm.dispatchForm.logisticsProviderId = 5;
+    // deliveryFee 保持 undefined（默认留空）
+    await vm.doDispatch();
+    await flushPromises();
+    expect(apiLogisticsDispatch).toHaveBeenCalledWith(7, { logisticsProviderId: 5, deliveryFee: null });
+  });
+
+  it('SIGNED/SIGNED_PAID/REJECTED 点击打开费用确认弹窗而非直接调接口', async () => {
+    setUser({ isSuper: 1 });
+    const vm = mountPage().vm as any;
+    await openWith(vm, { id: 8, status: 'DISPATCHING', deliveryFee: 12.5, items: [] });
+    vm.onStatusClick('SIGNED');
+    expect(apiLogisticsUpdateStatus).not.toHaveBeenCalled();
+    expect(vm.statusModal.open).toBe(true);
+    expect(vm.statusModal.target).toBe('SIGNED');
+    expect(vm.statusModal.deliveryFee).toBe(12.5); // 预填已知费用
+    vm.statusModal.deliveryFee = 30;
+    await vm.doStatusConfirm();
+    await flushPromises();
+    expect(apiLogisticsUpdateStatus).toHaveBeenCalledWith(8, { status: 'SIGNED', deliveryFee: 30 });
+    expect(vm.statusModal.open).toBe(false);
+  });
+
+  it('UNREACHABLE 仍为一键直发（不弹窗，deliveryFee: null）', async () => {
+    setUser({ isSuper: 1 });
+    const vm = mountPage().vm as any;
+    apiSalesOrderGet.mockResolvedValue({ id: 9, status: 'DISPATCHING', items: [] });
+    await vm.openDetail({ id: 9 });
+    await flushPromises();
+    vm.onStatusClick('UNREACHABLE');
+    await flushPromises();
+    expect(vm.statusModal.open).toBe(false);
+    expect(apiLogisticsUpdateStatus).toHaveBeenCalledWith(9, { status: 'UNREACHABLE', deliveryFee: null });
   });
 });

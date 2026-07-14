@@ -75,7 +75,13 @@ export interface SalesOrderQuery {
 // ---- 物流动作 ----
 export interface LogisticsDispatchDTO {
   logisticsProviderId: Id;
-  deliveryFee: number;
+  /** null = 未知（送达后再补录），区别于 0 = 免费 */
+  deliveryFee: number | null;
+}
+export interface LogisticsStatusUpdateDTO {
+  status: SalesStatus;
+  /** 省略/null = 不修改现有派送费（无法清回未知） */
+  deliveryFee?: number | null;
 }
 export interface RejectItemDTO {
   itemId: Id;
