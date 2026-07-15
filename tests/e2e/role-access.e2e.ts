@@ -1,11 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// 角色权限走查（用 V7 模板角色）：超管为每个角色建一个用户并赋角色，
+// 角色权限走查（用 V7/V17 模板角色）：超管为每个角色建一个用户并赋角色，
 // 然后以该用户登录，断言只见对应顶级菜单、不见他域菜单，且越权直达路由不可达（落 404）。
-// 前置：本地后端运行，dev proxy /api → 后端。
-//
-// 已知后端权限缺口：LOGISTICS 角色未授予 sales:order:list，物流跟踪页列表将无数据，
-// 但「物流管理」菜单仍可见——本走查只断言菜单可见性与越权拦截，不依赖列表数据。
+// 前置：本地后端运行（V17 已应用），dev proxy /api → 后端。
 
 const SUPER = { username: 'superadmin', password: 'Admin@123' };
 
@@ -20,8 +17,8 @@ interface RoleCase {
 const CASES: RoleCase[] = [
   { roleLabel: '采购员', visibleMenu: '采购管理', hiddenMenu: '系统管理', forbiddenPath: '/system/user', forbiddenText: '新增用户' },
   { roleLabel: '仓库管理员', visibleMenu: '库存管理', hiddenMenu: '采购管理', forbiddenPath: '/purchase/plan', forbiddenText: '新增采购计划' },
-  { roleLabel: '销售员', visibleMenu: '销售管理', hiddenMenu: '采购管理', forbiddenPath: '/purchase/plan', forbiddenText: '新增采购计划' },
-  { roleLabel: '物流专员', visibleMenu: '物流管理', hiddenMenu: '销售管理', forbiddenPath: '/sales/order', forbiddenText: '新增销售订单' },
+  { roleLabel: '销售支持', visibleMenu: '销售管理', hiddenMenu: '采购管理', forbiddenPath: '/purchase/plan', forbiddenText: '新增采购计划' },
+  { roleLabel: '物流支持', visibleMenu: '物流管理', hiddenMenu: '销售管理', forbiddenPath: '/sales/order', forbiddenText: '新增销售订单' },
 ];
 
 async function login(page: Page, username: string, password: string) {
@@ -32,7 +29,10 @@ async function login(page: Page, username: string, password: string) {
   await expect(page).toHaveURL(/\/(dashboard)?$/);
 }
 async function logout(page: Page) {
-  await page.locator('header .cursor-pointer').first().hover();
+  // 越权直达可能落到无 BasicLayout 的 404 页，先回首页确保 header 存在。
+  await page.goto('/');
+  // header 含两个 .cursor-pointer：语言切换在前，用户下拉在后（含「退出登录」）。
+  await page.locator('header .cursor-pointer').last().hover();
   await page.getByText('退出登录').click();
   await expect(page).toHaveURL(/\/login/);
 }
