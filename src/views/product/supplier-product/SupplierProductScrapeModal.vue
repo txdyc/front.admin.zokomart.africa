@@ -147,7 +147,7 @@ defineExpose({ form, brandOptions, rows, result, onScrape, onImport });
       </a-form-item>
       <a-form-item :label="t('product.supplierProduct.scrape.urlLabel')" required>
         <a-space style="width: 100%">
-          <a-input v-model:value="form.url" placeholder="https://morgan.dzncm.com/price81469/" style="width: 520px" />
+          <a-input v-model:value="form.url" placeholder="" style="width: 520px" />
           <a-button type="primary" :loading="scraping" data-test="do-scrape" @click="onScrape">{{ t('product.supplierProduct.scrape.scrape') }}</a-button>
         </a-space>
       </a-form-item>

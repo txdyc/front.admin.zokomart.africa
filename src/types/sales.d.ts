@@ -87,3 +87,25 @@ export interface RejectItemDTO {
   itemId: Id;
   rejectQty: number;
 }
+
+// ---- 可下单产品（下单 picker） ----
+// 与后端 OrderableProductVO 对齐：supplier_product LEFT JOIN inventory_stock
+// quantity 为 COALESCE(inventory_stock.quantity, 0)，可能为 0 或负数（缺货/欠货）。
+export interface OrderableProductVO {
+  supplierProductId: Id;
+  productName: string;
+  productCode: string;
+  supplierName: string;
+  quantity: number;
+  retailPrice: number | null;
+}
+
+// CascadeFilter 输出；与 InventoryStockQuery 同构
+export interface OrderableProductQuery {
+  supplierId?: Id;
+  brandId?: Id;
+  categoryId?: Id;
+  keyword?: string;
+  current?: number;
+  size?: number;
+}
