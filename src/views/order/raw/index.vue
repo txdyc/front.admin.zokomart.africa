@@ -93,6 +93,7 @@ const onImportOk = () => {
 };
 
 const statusColor: Record<RawOrderStatus, string> = {
+  NOT_DISPATCHED: 'default',
   PAID: 'green',
   RECIPIENT_REFUSED: 'red',
   UNABLE_TO_CONTACT_RECIPIENT: 'orange',
@@ -124,10 +125,10 @@ const editSchema = computed<FormField[]>(() => [
   { field: 'telephone', label: t('rawOrder.telephone'), component: 'input', rules: requiredInput() },
   { field: 'city', label: t('rawOrder.city'), component: 'input', rules: requiredInput() },
   { field: 'address', label: t('rawOrder.address'), component: 'input', rules: requiredInput() },
-  { field: 'status', label: t('common.status'), component: 'select', options: statusOptions.value, rules: requiredSelect() },
+  { field: 'status', label: t('common.status'), component: 'select', options: statusOptions.value },
   { field: 'cod', label: t('rawOrder.cod'), component: 'number', props: { min: 0, precision: 2 }, rules: requiredInput() },
-  { field: 'freight', label: t('rawOrder.freight'), component: 'number', props: { min: 0, precision: 2 }, rules: requiredInput() },
-  { field: 'balance', label: t('rawOrder.balance'), component: 'number', props: { min: 0, precision: 2 }, rules: requiredInput() },
+  { field: 'freight', label: t('rawOrder.freight'), component: 'number', props: { min: 0, precision: 2 } },
+  { field: 'balance', label: t('rawOrder.balance'), component: 'number', props: { min: 0, precision: 2 } },
 ]);
 
 function openEdit(row: RawOrderVO) {
@@ -210,6 +211,7 @@ defineExpose({
             style="width: 180px"
             :placeholder="t('common.pleaseSelect')"
           >
+            <a-select-option value="NOT_DISPATCHED">{{ statusLabel('NOT_DISPATCHED') }}</a-select-option>
             <a-select-option value="PAID">{{ statusLabel('PAID') }}</a-select-option>
             <a-select-option value="RECIPIENT_REFUSED">{{ statusLabel('RECIPIENT_REFUSED') }}</a-select-option>
             <a-select-option value="UNABLE_TO_CONTACT_RECIPIENT">{{ statusLabel('UNABLE_TO_CONTACT_RECIPIENT') }}</a-select-option>

@@ -501,6 +501,7 @@ export default {
     rowNo: 'Row',
     reason: 'Reason',
     statusText: {
+      NOT_DISPATCHED: 'Not Dispatched',
       PAID: 'Paid',
       RECIPIENT_REFUSED: 'Refused by Recipient',
       UNABLE_TO_CONTACT_RECIPIENT: 'Unable to Contact Recipient',

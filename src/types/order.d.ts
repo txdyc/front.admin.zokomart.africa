@@ -1,6 +1,7 @@
 import type { Id } from './api';
 
 export type RawOrderStatus =
+  | 'NOT_DISPATCHED'
   | 'PAID'
   | 'RECIPIENT_REFUSED'
   | 'UNABLE_TO_CONTACT_RECIPIENT'

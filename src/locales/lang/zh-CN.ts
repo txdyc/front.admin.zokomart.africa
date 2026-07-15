@@ -501,6 +501,7 @@ export default {
     rowNo: '行号',
     reason: '原因',
     statusText: {
+      NOT_DISPATCHED: '未派送',
       PAID: '已支付',
       RECIPIENT_REFUSED: '收件人拒收',
       UNABLE_TO_CONTACT_RECIPIENT: '无法联系收件人',
