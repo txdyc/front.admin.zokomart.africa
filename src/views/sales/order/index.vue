@@ -5,11 +5,8 @@ import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
 import CascadeFilter from '@/components/CascadeFilter.vue';
-import { apiSalesOrderCreate, apiSalesOrderPage, apiSalesOrderGet } from '@/api/sales/order';
-import { apiStockPage } from '@/api/inventory/stock';
-import { apiSupplierProductGet } from '@/api/product/supplierProduct';
-import type { SalesOrderVO, SalesOrderCreateDTO, SalesStatus } from '@/types/sales';
-import type { InventoryStockVO, InventoryStockQuery } from '@/types/inventory';
+import { apiSalesOrderCreate, apiSalesOrderPage, apiSalesOrderGet, apiOrderableProductsPage } from '@/api/sales/order';
+import type { SalesOrderVO, SalesOrderCreateDTO, SalesStatus, OrderableProductVO, OrderableProductQuery } from '@/types/sales';
 import type { Id } from '@/types/api';
 import LabelPrintDrawer from './LabelPrintDrawer.vue';
 
@@ -66,9 +63,9 @@ const drawerOpen = ref(false);
 const submitting = ref(false);
 const customer = reactive({ name: '', phone: '', address: '', remark: '' });
 
-const stockFilter = ref<InventoryStockQuery>({});
+const stockFilter = ref<OrderableProductQuery>({});
 const stockQuery = ref<Record<string, any>>({});
-const onStockFilterChange = (v: InventoryStockQuery) => (stockQuery.value = { ...v });
+const onStockFilterChange = (v: OrderableProductQuery) => (stockQuery.value = { ...v });
 
 const stockColumns = computed<TableColumnsType>(() => [
   { title: t('sales.order.product'), dataIndex: 'productName', key: 'productName' },
@@ -81,8 +78,8 @@ const stockColumns = computed<TableColumnsType>(() => [
 function getQty(productId: Id): number {
   return cart[String(productId)]?.qty ?? 0;
 }
-// 录入数量；新加入时按零售价带出默认单价（库存 VO 无价，故取供应商产品）
-async function setQty(row: InventoryStockVO, val: number | null) {
+// 录入数量；新加入时按零售价带出默认单价（VO 已带 retailPrice，无需再请求供应商产品）
+function setQty(row: OrderableProductVO, val: number | null) {
   const key = String(row.supplierProductId);
   const qty = val ?? 0;
   if (cart[key]) {
@@ -91,14 +88,13 @@ async function setQty(row: InventoryStockVO, val: number | null) {
     return;
   }
   if (qty <= 0) return;
-  const sp = await apiSupplierProductGet(row.supplierProductId);
   cart[key] = {
     supplierProductId: row.supplierProductId,
     productName: row.productName,
     productCode: row.productCode,
     stockQty: row.quantity,
     qty,
-    unitPrice: sp.retailPrice ?? 0,
+    unitPrice: row.retailPrice ?? 0,
   };
 }
 function setUnitPrice(r: CartRow, val: number | null) {
@@ -112,8 +108,8 @@ const selectedRows = computed(() => Object.values(cart).filter((r) => r.qty > 0)
 const totalAmount = computed(() =>
   selectedRows.value.reduce((s, r) => s + r.unitPrice * r.qty, 0),
 );
-// 数量须 1..库存（下单时后端再校验防超卖）
-const rowInvalid = (r: CartRow) => r.qty > 0 && (r.qty > r.stockQty || r.qty < 1);
+// 允许缺货下单：仅校验数量为正整数
+const rowInvalid = (r: CartRow) => r.qty < 1;
 const hasInvalid = computed(() => selectedRows.value.some(rowInvalid));
 const customerOk = computed(
   () => !!customer.name.trim() && !!customer.phone.trim() && !!customer.address.trim(),
@@ -233,16 +229,19 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
     <a-drawer v-model:open="drawerOpen" :title="t('sales.order.createTitle')" width="960" destroy-on-close>
       <a-card size="small" :title="t('sales.order.selectProducts')" class="mb-3">
         <CascadeFilter v-model="stockFilter" @change="onStockFilterChange" />
-        <BasicTable :columns="stockColumns" :fetcher="apiStockPage" :params="stockQuery" class="mt-2">
+        <BasicTable :columns="stockColumns" :fetcher="apiOrderableProductsPage" :params="stockQuery" class="mt-2">
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'qty'">
+            <template v-if="column.key === 'quantity'">
+              <span :class="{ 'text-red-500': record.quantity <= 0 }">{{ record.quantity }}</span>
+              <a-tag v-if="record.quantity <= 0" color="orange" class="ml-1">{{ t('sales.order.backorder') }}</a-tag>
+            </template>
+            <template v-else-if="column.key === 'qty'">
               <a-input-number
                 :value="getQty(record.supplierProductId)"
                 :min="0"
-                :max="record.quantity"
                 :precision="0"
                 style="width: 110px"
-                @change="(v: any) => setQty(record as InventoryStockVO, v)"
+                @change="(v: any) => setQty(record as OrderableProductVO, v)"
               />
             </template>
           </template>
@@ -270,6 +269,7 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
                 {{ record.qty }}
                 <a-tooltip v-if="rowInvalid(record as CartRow)" :title="t('sales.order.qtyExceedsStock')">⚠</a-tooltip>
               </span>
+              <a-tag v-if="record.stockQty <= 0" color="orange" class="ml-1">{{ t('sales.order.backorder') }}</a-tag>
             </template>
             <template v-else-if="column.key === 'unitPrice'">
               <a-input-number
