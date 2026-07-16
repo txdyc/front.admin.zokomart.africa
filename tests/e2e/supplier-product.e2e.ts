@@ -13,7 +13,7 @@ async function loginSuper(page: Page) {
   await page.getByPlaceholder('superadmin').fill('superadmin');
   await page.getByPlaceholder('密码').fill('Admin@123');
   await page.getByRole('button', { name: /登\s*录/ }).click();
-  await expect(page).toHaveURL(/\/(dashboard)?$/);
+  await expect(page).toHaveURL(/\/(dashboard(\/overview)?)?$/);
 }
 
 test('供应商产品：建供应商→建产品→联动筛选可见', async ({ page }) => {

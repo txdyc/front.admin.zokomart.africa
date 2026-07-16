@@ -14,7 +14,7 @@ async function login(page: Page, username: string, password: string) {
   await page.getByPlaceholder('superadmin').fill(username);
   await page.getByPlaceholder('密码').fill(password);
   await page.getByRole('button', { name: /登\s*录/ }).click();
-  await expect(page).toHaveURL(/\/(dashboard)?$/);
+  await expect(page).toHaveURL(/\/(dashboard(\/overview)?)?$/);
 }
 
 async function logout(page: Page) {

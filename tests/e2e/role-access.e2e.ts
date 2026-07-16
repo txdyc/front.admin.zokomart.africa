@@ -26,7 +26,7 @@ async function login(page: Page, username: string, password: string) {
   await page.getByPlaceholder('superadmin').fill(username);
   await page.getByPlaceholder('密码').fill(password);
   await page.getByRole('button', { name: /登\s*录/ }).click();
-  await expect(page).toHaveURL(/\/(dashboard)?$/);
+  await expect(page).toHaveURL(/\/(dashboard(\/overview)?)?$/);
 }
 async function logout(page: Page) {
   // 越权直达可能落到无 BasicLayout 的 404 页，先回首页确保 header 存在。
