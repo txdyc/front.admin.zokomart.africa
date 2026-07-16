@@ -27,6 +27,13 @@ export function buildRoutes(menus: MenuVO[]): RouteRecordRaw[] {
           },
           children: n.children?.length ? walk(n.children) : undefined,
         } as RouteRecordRaw;
+        // 目录(type=1)无组件：直接访问其路径时重定向到首个可见子菜单，
+        // 否则会命中空 router-view（如 / → /dashboard 命中数据看板目录后白屏）。
+        if (n.type === 1 && route.children?.length) {
+          const first =
+            route.children.find((c) => !(c.meta as { hidden?: boolean })?.hidden) ?? route.children[0];
+          route.redirect = first.path;
+        }
         return route;
       });
   return walk(menus);

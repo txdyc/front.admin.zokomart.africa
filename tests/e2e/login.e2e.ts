@@ -8,6 +8,6 @@ test('超管登录后进入工作台并看到菜单', async ({ page }) => {
   // Ant Design Vue 会在两个汉字间插入空格，可访问名为 "登 录"
   await page.getByRole('button', { name: /登\s*录/ }).click();
 
-  await expect(page).toHaveURL(/\/(dashboard)?$/);
+  await expect(page).toHaveURL(/\/(dashboard(\/overview)?)?$/);
   await expect(page.getByText('系统管理')).toBeVisible();
 });
