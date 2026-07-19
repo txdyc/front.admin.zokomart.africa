@@ -28,6 +28,7 @@ const columns = computed<TableColumnsType>(() => [
   { title: t('ad.model.baseUrl'), dataIndex: 'baseUrl', key: 'baseUrl' },
   { title: t('ad.model.apiKey'), dataIndex: 'apiKeyMasked', key: 'apiKeyMasked', width: 140 },
   { title: t('ad.model.modelCode'), dataIndex: 'modelCode', key: 'modelCode' },
+  { title: t('ad.model.apiFormat'), dataIndex: 'apiFormat', key: 'apiFormat', width: 110 },
   { title: t('common.sort'), dataIndex: 'sort', key: 'sort', width: 80 },
   { title: t('common.status'), dataIndex: 'enabled', key: 'enabled', width: 90 },
   { title: t('common.operation'), key: 'action', width: 160 },
@@ -44,6 +45,14 @@ const formSchema = computed<FormField[]>(() => [
     rules: editingId.value ? [] : [{ required: true, message: t('ad.model.inputApiKey') }],
   },
   { field: 'modelCode', label: t('ad.model.modelCode'), component: 'input', rules: [{ required: true, message: t('ad.model.inputModelCode') }] },
+  {
+    field: 'apiFormat', label: t('ad.model.apiFormat'), component: 'select',
+    options: [
+      { label: t('ad.model.apiFormatChat'), value: 'CHAT' },
+      { label: t('ad.model.apiFormatImage'), value: 'IMAGE' },
+    ],
+    rules: [{ required: true, message: t('ad.model.inputApiFormat') }],
+  },
   { field: 'sort', label: t('common.sort'), component: 'number' },
   { field: 'enabled', label: t('common.enabled'), component: 'switch' },
   { field: 'remark', label: t('common.remark'), component: 'textarea' },
@@ -55,7 +64,7 @@ const submitting = ref(false);
 
 function openCreate() {
   editingId.value = null;
-  formInitial.value = { enabled: 1, sort: 0 };
+  formInitial.value = { enabled: 1, sort: 0, apiFormat: 'CHAT' };
   modalOpen.value = true;
 }
 function openEdit(row: AdAiModelVO) {
@@ -65,6 +74,7 @@ function openEdit(row: AdAiModelVO) {
     baseUrl: row.baseUrl,
     apiKey: '',            // 编辑不回显 key；留空 = 不修改
     modelCode: row.modelCode,
+    apiFormat: row.apiFormat || 'CHAT',
     sort: row.sort,
     enabled: row.enabled,
     remark: row.remark,

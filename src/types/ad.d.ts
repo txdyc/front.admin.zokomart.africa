@@ -6,6 +6,8 @@ export interface AdAiModelVO {
   baseUrl: string;
   apiKeyMasked: string;
   modelCode: string;
+  /** CHAT=chat/completions 多模态；IMAGE=images generations/edits */
+  apiFormat: string;
   enabled: number;
   sort: number;
   remark?: string;
@@ -18,6 +20,7 @@ export interface AdAiModelSaveDTO {
   /** 新建必填；编辑留空 = 不修改 */
   apiKey?: string;
   modelCode: string;
+  apiFormat?: string;
   enabled: number;
   sort?: number;
   remark?: string;
