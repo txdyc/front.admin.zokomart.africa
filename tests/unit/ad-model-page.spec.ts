@@ -17,10 +17,10 @@ vi.mock('@/components/SchemaForm.vue', () => ({
   }),
 }));
 
-const apiAdModelPage = vi.fn(async () => ({ records: [], total: 0, current: 1, size: 10 }));
-const apiAdModelCreate = vi.fn(async () => '1');
-const apiAdModelUpdate = vi.fn(async () => undefined);
-const apiAdModelDelete = vi.fn(async () => undefined);
+const apiAdModelPage = vi.fn(async (..._a: any[]) => ({ records: [], total: 0, current: 1, size: 10 }));
+const apiAdModelCreate = vi.fn(async (..._a: any[]) => '1');
+const apiAdModelUpdate = vi.fn(async (..._a: any[]) => undefined);
+const apiAdModelDelete = vi.fn(async (..._a: any[]) => undefined);
 vi.mock('@/api/ad', () => ({
   apiAdModelPage: (...a: any[]) => apiAdModelPage(...a),
   apiAdModelCreate: (...a: any[]) => apiAdModelCreate(...a),

@@ -5,12 +5,12 @@ import { useAuthStore } from '@/store/auth';
 import { perm } from '@/directives/perm';
 import type { LoginUserVO } from '@/types/api';
 
-const apiAdModelEnabled = vi.fn(async () => [{ id: 'm1', name: 'NB Pro' }]);
-const apiAdGenerate = vi.fn(async () => ({ tempUrls: ['/files/ad-temp/t1.png'], errors: [] }));
-const apiAdKeep = vi.fn(async () => ['k1']);
-const apiAdDiscard = vi.fn(async () => undefined);
-const apiAdImageList = vi.fn(async () => [] as any[]);
-const apiAdImageDelete = vi.fn(async () => undefined);
+const apiAdModelEnabled = vi.fn(async (..._a: any[]) => [{ id: 'm1', name: 'NB Pro' }]);
+const apiAdGenerate = vi.fn(async (..._a: any[]) => ({ tempUrls: ['/files/ad-temp/t1.png'], errors: [] }));
+const apiAdKeep = vi.fn(async (..._a: any[]) => ['k1']);
+const apiAdDiscard = vi.fn(async (..._a: any[]) => undefined);
+const apiAdImageList = vi.fn(async (..._a: any[]) => [] as any[]);
+const apiAdImageDelete = vi.fn(async (..._a: any[]) => undefined);
 vi.mock('@/api/ad', () => ({
   apiAdModelEnabled: (...a: any[]) => apiAdModelEnabled(...a),
   apiAdGenerate: (...a: any[]) => apiAdGenerate(...a),
