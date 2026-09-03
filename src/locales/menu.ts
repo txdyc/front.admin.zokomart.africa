@@ -15,6 +15,7 @@ const menuMap: Record<Locale, Record<string, string>> = {
     销售管理: 'Sales',
     物流管理: 'Logistics',
     客户管理: 'Customers',
+    广告管理: 'Advertising',
     '/dashboard': 'Dashboard',
     '/system/user': 'Users',
     '/system/role': 'Roles',
@@ -32,6 +33,8 @@ const menuMap: Record<Locale, Record<string, string>> = {
     '/sales/order': 'Sales Orders',
     '/logistics/track': 'Logistics Tracking',
     '/customer': 'Customers',
+    '/ad/image-generation': 'AI Images',
+    '/ad/model': 'AI Models',
   },
 };
 
