@@ -24,6 +24,8 @@ export interface WcSyncJobItem {
 
 export interface WcSyncJob {
   jobId: number | string;
+  siteCode?: string;
+  siteName?: string;
   status: 'RUNNING' | 'SUCCESS' | 'PARTIAL' | 'FAILED' | 'INTERRUPTED';
   total: number;
   processed: number;
@@ -34,4 +36,11 @@ export interface WcSyncJob {
   failedItems: WcSyncJobItem[];
   startTime?: string;
   endTime?: string;
+}
+
+/** 目标站点（同步弹框选择用）。 */
+export interface WcSyncSite {
+  code: string;
+  name: string;
+  configured: boolean;
 }
