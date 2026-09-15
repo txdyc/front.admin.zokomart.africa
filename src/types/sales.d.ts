@@ -11,6 +11,7 @@ export type SalesStatus =
 
 export interface SalesOrderItemVO {
   id: Id;
+  externalOrderId: string | null;
   supplierProductId: Id;
   productName: string;
   productCode: string;

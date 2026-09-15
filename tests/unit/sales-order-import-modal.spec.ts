@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { Upload } from 'ant-design-vue';
 import SalesOrderImportModal from '@/views/sales/order/SalesOrderImportModal.vue';
 import type { SalesOrderImportResult } from '@/types/sales';
 
@@ -64,7 +65,9 @@ describe('销售订单导入弹窗', () => {
     const w = mountModal();
     await flushPromises();
     const csv = new File(['x'], 'orders.csv', { type: 'text/csv' });
-    expect(w.vm.beforeUpload(csv)).toBe(false);
+    // LIST_IGNORE 而不是 false：false 只是阻止自动上传，仍会把被拒绝的文件塞进 a-upload
+    // 的文件列表，看起来像已选中；LIST_IGNORE 才会让 Ant 真正忽略这个文件。
+    expect(w.vm.beforeUpload(csv)).toBe(Upload.LIST_IGNORE);
     expect(w.vm.file).toBe(null);
   });
 

@@ -346,6 +346,7 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, im
           :columns="[
             { title: t('sales.order.product'), dataIndex: 'productName', key: 'productName' },
             { title: t('common.code'), dataIndex: 'productCode', key: 'productCode', width: 120 },
+            { title: t('sales.order.errOrderIds'), dataIndex: 'externalOrderId', key: 'externalOrderId', width: 140 },
             { title: t('sales.order.unitPrice'), dataIndex: 'unitPrice', key: 'unitPrice', width: 90 },
             { title: t('common.quantity'), dataIndex: 'qty', key: 'qty', width: 70 },
             { title: t('sales.order.rejectQty'), dataIndex: 'rejectQty', key: 'rejectQty', width: 70 },
@@ -357,7 +358,8 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, im
           size="small"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'unitPrice'">{{ money(record.unitPrice) }}</template>
+            <template v-if="column.key === 'externalOrderId'">{{ record.externalOrderId ?? '-' }}</template>
+            <template v-else-if="column.key === 'unitPrice'">{{ money(record.unitPrice) }}</template>
             <template v-else-if="column.key === 'amount'">{{ money(record.amount) }}</template>
           </template>
         </a-table>

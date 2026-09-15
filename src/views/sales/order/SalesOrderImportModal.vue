@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { message } from 'ant-design-vue';
+import { message, Upload } from 'ant-design-vue';
 import { apiSalesOrderImport } from '@/api/sales/order';
 import type { SalesOrderImportResult } from '@/types/sales';
 
@@ -18,11 +18,15 @@ const submitting = ref(false);
 const beforeUpload = (f: File) => {
   if (!f.name.toLowerCase().endsWith('.xlsx')) {
     message.warning(t('sales.order.xlsxOnly'));
-    return false;
+    // 拒绝路径必须返回 LIST_IGNORE，而不是 false：Ant Upload 对 false 的理解仅是
+    // “别自动上传”，仍会把这个（被拒绝的）文件塞进列表——看起来像已选中，
+    // 而 Start Import 按钮又（正确地）因为 file 仍是 null 而禁用，UI 自相矛盾。
+    // LIST_IGNORE 才是“别管这个文件”，不会进列表。
+    return Upload.LIST_IGNORE;
   }
   file.value = f;
   result.value = null;
-  return false; // 阻止 a-upload 自动上传，由 onSubmit 手动提交
+  return false; // 接受路径仍返回 false：阻止 a-upload 自动上传，由 onSubmit 手动提交
 };
 
 const onSubmit = async () => {
