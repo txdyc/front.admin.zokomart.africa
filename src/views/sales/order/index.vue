@@ -9,6 +9,7 @@ import { apiSalesOrderCreate, apiSalesOrderPage, apiSalesOrderGet, apiOrderableP
 import type { SalesOrderVO, SalesOrderCreateDTO, SalesStatus, OrderableProductVO, OrderableProductQuery } from '@/types/sales';
 import type { Id } from '@/types/api';
 import LabelPrintDrawer from './LabelPrintDrawer.vue';
+import SalesOrderImportModal from './SalesOrderImportModal.vue';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
 const { t } = useI18n();
@@ -25,6 +26,7 @@ const STATUS = computed<Record<SalesStatus, { label: string; color: string }>>((
 // ---------------- 列表 ----------------
 const tableRef = ref<InstanceType<typeof BasicTable>>();
 const labelDrawerRef = ref<InstanceType<typeof LabelPrintDrawer>>();
+const importVisible = ref(false);
 // 'all' | 'pending' | 'completed' → completed 查询参数
 const completedTab = ref<'all' | 'pending' | 'completed'>('all');
 const query = ref<Record<string, any>>({});
@@ -173,7 +175,7 @@ async function openView(row: SalesOrderVO) {
   viewOpen.value = true;
 }
 
-defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
+defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, importVisible });
 </script>
 
 <template>
@@ -192,6 +194,13 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
             @click="labelDrawerRef?.openDrawer()"
           >
             {{ t('sales.order.printLabels') }}
+          </a-button>
+          <a-button
+            v-perm="'sales:order:import'"
+            data-test="sales-import"
+            @click="importVisible = true"
+          >
+            {{ t('sales.order.importOrders') }}
           </a-button>
           <a-button v-perm="'sales:order:create'" type="primary" data-test="sales-create" @click="openCreate">
             {{ t('sales.order.createOrder') }}
@@ -319,6 +328,7 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView });
     </a-drawer>
 
     <LabelPrintDrawer ref="labelDrawerRef" />
+    <SalesOrderImportModal v-model:visible="importVisible" @ok="tableRef?.reload()" />
 
     <!-- 详情 -->
     <a-drawer v-model:open="viewOpen" :title="t('sales.order.detailTitle')" width="800" destroy-on-close>
