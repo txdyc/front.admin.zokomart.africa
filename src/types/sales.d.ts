@@ -11,6 +11,7 @@ export type SalesStatus =
 
 export interface SalesOrderItemVO {
   id: Id;
+  externalOrderId: string | null;
   supplierProductId: Id;
   productName: string;
   productCode: string;
@@ -41,6 +42,8 @@ export interface SalesOrderVO {
   remark: string | null;
   createTime: string | null;
   items: SalesOrderItemVO[];
+  city?: string | null;
+  orderDate?: string | null;
 }
 
 export interface SalesOrderLabelVO {
@@ -108,4 +111,22 @@ export interface OrderableProductQuery {
   keyword?: string;
   current?: number;
   size?: number;
+}
+
+// ---- Excel 导入（按客户+日期归并成订单） ----
+export interface SalesOrderImportError {
+  rows: string;
+  externalOrderIds: string;
+  customerName: string;
+  productCode: string | null;
+  reason: string;
+}
+
+export interface SalesOrderImportResult {
+  totalRows: number;
+  orderCount: number;
+  success: number;
+  skipped: number;
+  failed: number;
+  errors: SalesOrderImportError[];
 }

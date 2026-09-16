@@ -15,3 +15,6 @@ coverage/
 .env.*.local
 # 自动生成的类型声明（unplugin-vue-components）
 src/types/components.d.ts
+
+# SDD 工作区（本地临时，勿提交）
+.superpowers/
