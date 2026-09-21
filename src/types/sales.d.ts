@@ -46,6 +46,12 @@ export interface SalesOrderVO {
   orderDate?: string | null;
 }
 
+export interface SalesOrderLabelItemVO {
+  productCode: string | null;
+  productName: string | null;
+  qty: number | null;
+}
+
 export interface SalesOrderLabelVO {
   id: Id;
   orderNo: string;
@@ -54,6 +60,8 @@ export interface SalesOrderLabelVO {
   customerAddress: string;
   totalQty: number | null;
   totalAmount: number | null;
+  /** 明细（按下单顺序），贴纸据此逐件展开。历史数据可能缺失，展开逻辑须兜底。 */
+  items?: SalesOrderLabelItemVO[] | null;
 }
 
 export interface SalesOrderCreateItem {
