@@ -3,6 +3,7 @@ import type { PageResult, Id } from '@/types/api';
 import type {
   SalesOrderVO,
   SalesOrderCreateDTO,
+  SalesOrderUpdateDTO,
   SalesOrderQuery,
   SalesOrderLabelVO,
   OrderableProductVO,
@@ -28,3 +29,9 @@ export const apiOrderableProductsPage = (q: OrderableProductQuery) =>
 // 单独放宽（同 ad.ts 的 apiAdGenerate 已有先例）。
 export const apiSalesOrderImport = (form: FormData) =>
   request.post('/sales-orders/import', form, { timeout: 120_000 }) as unknown as Promise<SalesOrderImportResult>;
+
+// 管理员修正订单：客户信息任何状态可改；items 省略 = 不改明细（仅未派送订单可传）
+export const apiSalesOrderUpdate = (id: Id, dto: SalesOrderUpdateDTO) =>
+  http.put<void>(`/sales-orders/${id}`, dto);
+// 逻辑删除；后端回补未拒收数量的库存
+export const apiSalesOrderDelete = (id: Id) => http.del<void>(`/sales-orders/${id}`);

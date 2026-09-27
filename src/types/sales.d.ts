@@ -77,6 +77,26 @@ export interface SalesOrderCreateDTO {
   items: SalesOrderCreateItem[];
 }
 
+export interface SalesOrderUpdateItem {
+  /** 已有明细 id；省略 = 新增行 */
+  id?: Id;
+  supplierProductId: Id;
+  qty: number;
+  unitPrice: number;
+  /** 省略/null = 后端按 unitPrice * qty 计算；未改动的行回传原值，避免导入尾差漂移 */
+  amount?: number | null;
+}
+export interface SalesOrderUpdateDTO {
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  city?: string | null;
+  orderDate?: string | null;
+  remark?: string | null;
+  /** 省略 = 不修改明细；仅 PENDING_DISPATCH 订单可传 */
+  items?: SalesOrderUpdateItem[];
+}
+
 export interface SalesOrderQuery {
   completed?: boolean;
   current?: number;

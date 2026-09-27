@@ -5,14 +5,23 @@ import { message } from 'ant-design-vue';
 import type { TableColumnsType } from 'ant-design-vue';
 import BasicTable from '@/components/BasicTable.vue';
 import CascadeFilter from '@/components/CascadeFilter.vue';
-import { apiSalesOrderCreate, apiSalesOrderPage, apiSalesOrderGet, apiOrderableProductsPage } from '@/api/sales/order';
+import {
+  apiSalesOrderCreate,
+  apiSalesOrderPage,
+  apiSalesOrderGet,
+  apiSalesOrderDelete,
+  apiOrderableProductsPage,
+} from '@/api/sales/order';
+import { usePermission } from '@/hooks/usePermission';
 import type { SalesOrderVO, SalesOrderCreateDTO, SalesStatus, OrderableProductVO, OrderableProductQuery } from '@/types/sales';
 import type { Id } from '@/types/api';
 import LabelPrintDrawer from './LabelPrintDrawer.vue';
 import SalesOrderImportModal from './SalesOrderImportModal.vue';
+import SalesOrderEditDrawer from './SalesOrderEditDrawer.vue';
 
 const money = (n: number | null | undefined) => (n ?? 0).toFixed(2);
 const { t } = useI18n();
+const { hasPerm } = usePermission();
 
 const STATUS = computed<Record<SalesStatus, { label: string; color: string }>>(() => ({
   PENDING_DISPATCH: { label: t('sales.order.statusPendingDispatch'), color: 'default' },
@@ -44,7 +53,7 @@ const listColumns = computed<TableColumnsType>(() => [
   { title: t('common.status'), dataIndex: 'status', key: 'status', width: 120 },
   { title: t('sales.order.completed'), dataIndex: 'completed', key: 'completed', width: 90 },
   { title: t('sales.order.orderTime'), dataIndex: 'createTime', key: 'createTime', width: 180 },
-  { title: t('common.operation'), key: 'action', width: 80 },
+  { title: t('common.operation'), key: 'action', width: 150 },
 ]);
 
 // ---------------- 下单抽屉 ----------------
@@ -175,7 +184,17 @@ async function openView(row: SalesOrderVO) {
   viewOpen.value = true;
 }
 
-defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, importVisible });
+// ---------------- 编辑 / 删除（管理员修正错误订单） ----------------
+const editDrawerRef = ref<InstanceType<typeof SalesOrderEditDrawer>>();
+// 仅待派送（未完成）订单可删除并回退库存，与后端一致
+const canDelete = (row: SalesOrderVO) => row.status === 'PENDING_DISPATCH' && row.completed !== 1;
+async function onDelete(row: SalesOrderVO) {
+  await apiSalesOrderDelete(row.id);
+  message.success(t('common.deleteSuccess'));
+  tableRef.value?.reload();
+}
+
+defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, onDelete, importVisible });
 </script>
 
 <template>
@@ -228,7 +247,23 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, im
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a data-test="sales-detail" @click="openView(record as SalesOrderVO)">{{ t('common.view') }}</a>
+            <a-space>
+              <a data-test="sales-detail" @click="openView(record as SalesOrderVO)">{{ t('common.view') }}</a>
+              <a
+                v-if="hasPerm('sales:order:update')"
+                data-test="sales-edit"
+                @click="editDrawerRef?.openDrawer((record as SalesOrderVO).id)"
+              >
+                {{ t('common.edit') }}
+              </a>
+              <a-popconfirm
+                v-if="hasPerm('sales:order:delete') && canDelete(record as SalesOrderVO)"
+                :title="t('sales.order.deleteConfirm')"
+                @confirm="onDelete(record as SalesOrderVO)"
+              >
+                <a class="text-red-500" data-test="sales-delete">{{ t('common.delete') }}</a>
+              </a-popconfirm>
+            </a-space>
           </template>
         </template>
       </BasicTable>
@@ -329,6 +364,7 @@ defineExpose({ openCreate, setQty, setUnitPrice, removeRow, submit, openView, im
 
     <LabelPrintDrawer ref="labelDrawerRef" />
     <SalesOrderImportModal v-model:visible="importVisible" @ok="tableRef?.reload()" />
+    <SalesOrderEditDrawer ref="editDrawerRef" @ok="tableRef?.reload()" />
 
     <!-- 详情 -->
     <a-drawer v-model:open="viewOpen" :title="t('sales.order.detailTitle')" width="800" destroy-on-close>
